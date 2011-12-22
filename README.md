@@ -1,7 +1,7 @@
 A Datafeed System for Financial Data.
 =====================================
 Datafeed is an fast, extensible quotes data storage build on
-Python/HDF5. IMIGU (http://imigu.com) has been using Datafedd on production
+Python/HDF5. IMIGU (http://imigu.com) has been using Datafeed on production
 more than a year.
 
 Datafeed is licensed under the Apache Licence, Version 2.0
@@ -36,8 +36,6 @@ Install dependent packages with pip:
  * python-dateutil: <2.0, RSS parsing
  * pycurl: url fetch
  * pywin32: only needed if you want to run TongShi client
- * matplotlib: for plotting
- * rpy2 for intractive with R
 
 
 ## INSTALLATION
