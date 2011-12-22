@@ -1,0 +1,65 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:          imigu
+# Required-Start:    $all
+# Required-Stop:     $all
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: starts the datafeed server
+# Description:       starts datafeed using start-stop-daemon
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+NAME=datafeed
+DESC=datafeed
+
+CHART_DAEMON=/home/josh/www/datafeed/chart.py
+CHART_NAME=datafeed-chart
+DAEMON_OPTS_CHART='--log_file_prefix=/home/josh/www/datafeed/log/chart.log'
+
+SERVER_DAEMON=/home/josh/www/datafeed/server.py
+SERVER_NAME=datafeed-server
+DAEMON_OPTS_SERVER='--log_file_prefix=/home/josh/www/datafeed/log/datafeed.log'
+
+
+test -x $DAEMON || exit 0
+
+set -e
+
+case "$1" in
+  start)
+        echo -n "Starting $DESC: "
+        start-stop-daemon --make-pidfile --background --start --quiet --pidfile /var/run/$SERVER_NAME.pid \
+                --exec $SERVER_DAEMON -- $DAEMON_OPTS_SERVER
+        start-stop-daemon --make-pidfile --background --start --quiet --pidfile /var/run/$CHART_NAME.pid \
+                --exec $CHART_DAEMON -- $DAEMON_OPTS_CHART
+        echo "$CHART_NAME, $SERVER_NAME"
+        ;;
+  stop)
+        echo -n "Stopping $DESC: "
+	start-stop-daemon --stop --oknodo --pidfile /var/run/$CHART_NAME.pid
+        start-stop-daemon --stop --oknodo --pidfile /var/run/$SERVER_NAME.pid
+        echo "$CHART_NAME, $SERVER_NAME."
+        ;;
+
+  restart|force-reload)
+        echo -n "Restarting $DESC: "
+        start-stop-daemon --stop --oknodo --retry 30 --pidfile /var/run/$CHART_NAME.pid
+        start-stop-daemon --stop --oknodo --retry 30 --pidfile /var/run/$SERVER_NAME.pid
+        sleep 1
+        start-stop-daemon --make-pidfile --background --start --quiet --pidfile /var/run/$SERVER_NAME.pid \
+                --exec $SERVER_DAEMON -- $DAEMON_OPTS_SERVER
+        start-stop-daemon --make-pidfile --background --start --quiet --pidfile \
+                /var/run/$CHART_NAME.pid --exec $CHART_DAEMON -- $DAEMON_OPTS_CHART
+        echo "$CHART_NAME, $SERVER_NAME"
+        ;;
+  *)
+        N=/etc/init.d/$NAME
+        echo "Usage: $N {start|stop|restart|force-reload}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0

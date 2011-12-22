@@ -1,0 +1,16 @@
+*.h5
+*.bdb
+*.DAT
+*.PWR
+*.pyc
+.ropeproject
+.coverage
+htmlcov
+data/*dump
+MANIFEST
+build
+datafeed.egg-info
+dist
+log/*
+var/*
+config.py

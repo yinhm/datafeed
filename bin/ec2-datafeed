@@ -1,0 +1,42 @@
+#!/bin/sh
+
+ROOT=$(dirname $0)/..
+
+export JAVA_HOME=/usr/lib/jvm/java-1.6.0-openjdk/
+export EC2_HOME=$ROOT/bin/ec2-api-tools
+export EC2_PRIVATE_KEY=$ROOT/.ec2/pk-aws.x509.pem
+export EC2_CERT=$ROOT/.ec2/cert-aws.x509.pem
+
+REGION=us-west-1
+INSTANCE=i-f6b5f5b2
+DESC="amazon ec2 windows server, instance id $INSTANCE"
+
+
+case "$1" in
+  start)
+	echo -n "Starting $DESC: "
+	$EC2_HOME/bin/ec2-start-instances --region $REGION $INSTANCE
+        ;;
+  stop)
+	echo -n "Stopping $DESC: "
+	$EC2_HOME/bin/ec2-stop-instances --region $REGION $INSTANCE
+        ;;
+  status)
+	echo -n "Status $DESC: "
+	$EC2_HOME/bin/ec2-describe-instances --region $REGION $INSTANCE
+	$EC2_HOME/bin/ec2-describe-instances
+        ;;
+  restart)
+        echo -n "Restarting $DESC: "
+	stop
+        sleep 60
+	start
+        ;;
+  *)
+        N=$(dirname $0)/ec2-datafeed
+        echo "Usage: $N {status|start|stop|restart}" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
