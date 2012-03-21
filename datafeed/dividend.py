@@ -6,6 +6,7 @@
 import datetime
 import numpy as np
 
+from pandas import DataFrame
 from pandas import TimeSeries
 
     
@@ -18,8 +19,8 @@ class Dividend(object):
         """
         assert div['time'] > 0
         assert abs(div['split']) > 0 or \
-            abs(div['purchase']) > 0 or \
-            abs(div['dividend']) > 0
+               abs(div['purchase']) > 0 or \
+               abs(div['dividend']) > 0
 
         self._npd = div
 
@@ -30,7 +31,7 @@ class Dividend(object):
         ----------
         frame: DataFrame of OHLCs.
         '''
-        if self.ex_date <= frame.index[0]: # no adjustment needed
+        if self.ex_date <= frame.index[0].date(): # no adjustment needed
             return True
 
         self._divide(frame)
@@ -43,8 +44,8 @@ class Dividend(object):
         cashes = [self.cash_afterward, 0.0]
         adj_day = self.ex_date - datetime.timedelta(days=1)
         indexes = []
-        indexes.append(adj_day)
-        indexes.append(datetime.date.today())
+        indexes.append(self.d2t(adj_day))
+        indexes.append(self.d2t(datetime.date.today()))
         
         cashes = TimeSeries(cashes, index=indexes)
         ri_cashes = cashes.reindex(frame.index, method='backfill')
@@ -58,8 +59,8 @@ class Dividend(object):
         splits = [self.share_afterward, 1.0]
         adj_day = self.ex_date - datetime.timedelta(days=1)
         indexes = []
-        indexes.append(adj_day)
-        indexes.append(datetime.date.today())
+        indexes.append(self.d2t(adj_day))
+        indexes.append(self.d2t(datetime.date.today()))
         
         splits = TimeSeries(splits, index=indexes)
         ri_splits = splits.reindex(frame.index, method='backfill')
@@ -77,3 +78,35 @@ class Dividend(object):
     @property
     def share_afterward(self):
         return 1 + self._npd['purchase'] + self._npd['split']
+
+    def d2t(self, date):
+        return datetime.datetime.combine(date, datetime.time())
+
+
+def adjust(y, divs):
+    """Return fully adjusted OHLCs data base on dividends
+
+    Paramaters:
+    y: numpy
+    divs: numpy of dividends
+
+    Return:
+    DataFrame objects
+    """
+    index = np.array([datetime.datetime.fromtimestamp(v) for v in y['time']],
+                     dtype=object)
+    y = DataFrame.from_records(y, index=index, exclude=['time'])
+    y['adjclose'] = y['close']
+
+    for div in divs:
+        d = Dividend(div)
+        d.adjust(y)
+
+    factor = y['adjclose'] / y['close']
+    frame = y.copy()
+    frame['open'] = frame['open'] * factor
+    frame['high'] = frame['high'] * factor
+    frame['low'] = frame['low'] * factor
+    frame['close'] = frame['close'] * factor
+    frame['volume'] = frame['volume'] * (1 / factor)
+    return frame

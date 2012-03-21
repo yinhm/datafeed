@@ -52,7 +52,7 @@ class DividendTest(unittest.TestCase):
                 ], dtype=self.dtype)
 
 
-        index = np.array([datetime.date.fromtimestamp(v) for v in ohlcs['time']],
+        index = np.array([datetime.datetime.fromtimestamp(v) for v in ohlcs['time']],
                          dtype=object)
         y = DataFrame.from_records(ohlcs, index=index, exclude=['time'])
         y['adjclose'] = y['close']
@@ -61,16 +61,16 @@ class DividendTest(unittest.TestCase):
             d = Dividend(div)
             d.adjust(y)
 
-        adjclose = y.xs(datetime.date(2003, 2, 13))['adjclose']
+        adjclose = y.xs(datetime.datetime(2003, 2, 13))['adjclose']
         self.assertTrue(self.floatEqual(adjclose, 23.42))
 
-        adjclose = y.xs(datetime.date(2003, 2, 14))['adjclose']
+        adjclose = y.xs(datetime.datetime(2003, 2, 14))['adjclose']
         self.assertTrue(self.floatEqual(adjclose, 24.07))
         
-        adjclose = y.xs(datetime.date(2003, 2, 18))['adjclose']
+        adjclose = y.xs(datetime.datetime(2003, 2, 18))['adjclose']
         self.assertTrue(self.floatEqual(adjclose, 24.88))
         
-        adjclose = y.xs(datetime.date(2003, 2, 19))['adjclose']
+        adjclose = y.xs(datetime.datetime(2003, 2, 19))['adjclose']
         self.assertTrue(self.floatEqual(adjclose, 24.53))
 
     def test_adjust_divide_and_split(self):
@@ -95,7 +95,7 @@ class DividendTest(unittest.TestCase):
                 (1308182400, 0.0, 0.0, 0.0, 0.5)                
                 ], dtype=self.dtype)
 
-        index = np.array([datetime.date.fromtimestamp(v) for v in ohlcs['time']],
+        index = np.array([datetime.datetime.fromtimestamp(v) for v in ohlcs['time']],
                          dtype=object)
         y = DataFrame.from_records(ohlcs, index=index, exclude=['time'])
         y['adjclose'] = y['close']
@@ -104,13 +104,13 @@ class DividendTest(unittest.TestCase):
             d = Dividend(div)
             d.adjust(y)
 
-        adjclose = y.xs(datetime.date(2010, 6, 29))['adjclose']
+        adjclose = y.xs(datetime.datetime(2010, 6, 29))['adjclose']
         self.assertTrue(self.floatEqual(adjclose, 11.51))
 
-        adjclose = y.xs(datetime.date(2010, 6, 24))['adjclose']
+        adjclose = y.xs(datetime.datetime(2010, 6, 24))['adjclose']
         self.assertTrue(self.floatEqual(adjclose, 13.11))
 
-        adjclose = y.xs(datetime.date(2010, 6, 24))['adjclose']
+        adjclose = y.xs(datetime.datetime(2010, 6, 24))['adjclose']
         self.assertTrue(self.floatEqual(adjclose, 13.07))
 
 
@@ -135,7 +135,7 @@ class DividendTest(unittest.TestCase):
                 (1307664000, 0.0, 0.0, 0.0, 0.28999999165534973)                
                 ], dtype=self.dtype)
 
-        index = np.array([datetime.date.fromtimestamp(v) for v in ohlcs['time']],
+        index = np.array([datetime.datetime.fromtimestamp(v) for v in ohlcs['time']],
                          dtype=object)
         y = DataFrame.from_records(ohlcs, index=index, exclude=['time'])
         y['adjclose'] = y['close']
@@ -144,7 +144,7 @@ class DividendTest(unittest.TestCase):
             d = Dividend(div)
             d.adjust(y)
 
-        adjclose = y.xs(datetime.date(2008, 7, 25))['adjclose']
+        adjclose = y.xs(datetime.datetime(2008, 7, 25))['adjclose']
         self.assertTrue(self.floatEqual(adjclose, 17.28))
 
 
