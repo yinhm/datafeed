@@ -491,6 +491,7 @@ class Day(OHLC):
         try:
             data = self._get_year_data(symbol, year)
         except KeyError:
+            self.handle[symbol] # test symbol existence
             data = []
 
         while True:
