@@ -414,7 +414,7 @@ class OHLC(object):
         return self.handle[key][:]
 
     def update(self, symbol, quotes):
-        """Archive daily 5minute ohlcs, override if datasets exists.
+        """Archive daily ohlcs, override if datasets exists.
 
         Arguments:
           symbol: Stock instrument.
@@ -487,10 +487,6 @@ class Day(OHLC):
         return self._handle
 
     def get(self, symbol, length):
-        '''
-        @fixme dividend adjust.
-        @fixme length can not greater than one year.
-        '''
         year = datetime.datetime.today().isocalendar()[0]
         try:
             data = self._get_year_data(symbol, year)
@@ -531,7 +527,6 @@ class Day(OHLC):
         - `symbol`: symbol.
         - `npydata`: data of npy file.
         """
-        chunks = []
         prev_year = None
         for row in data:
             day = datetime.datetime.fromtimestamp(row['time'])
