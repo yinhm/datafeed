@@ -382,7 +382,7 @@ class OHLC(object):
     def __init__(self, store):
         '''Init day store from handle.
 
-        Handle should be in each implementor's namespace, eg:
+        Handle should be in each implementors namespace, eg:
 
           day: /day
           1min: /1min
@@ -492,7 +492,10 @@ class Day(OHLC):
         @fixme length can not greater than one year.
         '''
         year = datetime.datetime.today().isocalendar()[0]
-        data = self._get_year_data(symbol, year)
+        try:
+            data = self._get_year_data(symbol, year)
+        except KeyError:
+            data = []
 
         while True:
             if len(data) >= length:
@@ -508,8 +511,10 @@ class Day(OHLC):
             if len(ydata) == 0:
                 break
 
-            data = np.append(ydata, data)
-
+            if len(data) == 0:
+                data = ydata
+            else:
+                data = np.append(ydata, data)
         return data[-length:]
 
     def get_by_date(self, symbol, date):
