@@ -10,7 +10,7 @@ from pandas import DataFrame, lib
 from pandas import TimeSeries
 
 from datafeed.datastore import Day
-from datafeed.dividend import Dividend
+from datafeed.dividend import Dividend, adjust
 
 
 def date2unixtime(date):
@@ -147,6 +147,32 @@ class DividendTest(unittest.TestCase):
         adjclose = y.xs(datetime.datetime(2008, 7, 25))['adjclose']
         self.assertTrue(self.floatEqual(adjclose, 17.28))
 
+
+    def test_adjust_func(self):
+        """Fix for pandas 0.8 release which upgrade datetime
+        handling.
+        """
+        ohlcs = np.array([
+                (date2unixtime(datetime.date(2003, 2, 13)),
+                 46.99, 46.99, 46.99, 46.99, 675114.0, 758148608.0),
+                (date2unixtime(datetime.date(2003, 2, 14)),
+                 48.30, 48.30, 48.30, 48.30, 675114.0, 758148608.0),
+                (date2unixtime(datetime.date(2003, 2, 18)),
+                 24.96, 24.96, 24.96, 24.96, 675114.0, 758148608.0),
+                (date2unixtime(datetime.date(2003, 2, 19)),
+                 24.53, 24.53, 24.53, 24.53, 675114.0, 758148608.0),
+                ], dtype=Day.DTYPE)
+
+        dividends = np.array([
+                (date2unixtime(datetime.date(2003, 2, 18)),
+                 1.0, 0.0, 0.0, 0.0), # Split 2:1
+                (date2unixtime(datetime.date(2003, 2, 19)),
+                 0.0, 0.0, 0.0, 0.08), # 0.08 cash dividend
+                ], dtype=self.dtype)
+
+
+        frame = adjust(ohlcs, dividends)
+        self.assertEqual(frame.index[0].date(), datetime.date(2003, 2, 13))
 
 if __name__ == '__main__':
     unittest.main()

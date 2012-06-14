@@ -8,6 +8,7 @@ import numpy as np
 
 from pandas import DataFrame
 from pandas import TimeSeries
+from pandas import DatetimeIndex
 
     
 class Dividend(object):
@@ -93,8 +94,7 @@ def adjust(y, divs):
     Return:
     DataFrame objects
     """
-    index = np.array([datetime.datetime.fromtimestamp(v) for v in y['time']],
-                     dtype=object)
+    index = DatetimeIndex([datetime.datetime.fromtimestamp(v) for v in y['time']])
     y = DataFrame.from_records(y, index=index, exclude=['time'])
     y['adjclose'] = y['close']
 
