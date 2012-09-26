@@ -40,7 +40,7 @@ import numpy as np
 
 __all__ = ['DzhDay', 'DzhDividend',
            'DzhMinute', 'DzhFiveMinute',
-           'DzhSector']
+           'DzhFin', 'DzhSector']
 
 
 class EndOfIndexError(StandardError):
@@ -56,7 +56,7 @@ def gb2utf(value, ignore=True):
     else:
         return unicode(value, 'gb18030').encode('utf-8')
 
-    
+
 class DzhDay(object):
     """大智慧日线数据"""
 
@@ -72,8 +72,8 @@ class DzhDay(object):
               ('close', '<f4'),
               ('volume', '<f4'),
               ('amount', '<f4')]
-    
-    
+
+
     def read(self, filename, market):
         """Generator of 日线数据读取
 
@@ -84,7 +84,7 @@ class DzhDay(object):
         store : hdf5 store
         """
         self.f = open(filename, 'r')
-        
+
         try:
             i = 0
             while True:
@@ -109,7 +109,7 @@ class DzhDay(object):
                                           dtype=self._DTYPE)
 
                 yield symbol, ohlcs
-            
+
                 i += 1
         except (EOFError, EndOfIndexError):
             raise StopIteration
@@ -129,7 +129,7 @@ class DzhDay(object):
         #     '''
         finally:
             self.f.close()
-        
+
     def read_index(self):
         """索引记录格式
 
@@ -152,13 +152,13 @@ class DzhDay(object):
         >>> index = read_index(f)
         >>> index
         ('000001', 4767, [0, 1132, 1135])
-        
+
         """
         symbol = unpack('10s', self.f.read(10))[0].replace('\x00', '')
 
         if symbol == '':
             raise EOFError
-        
+
         count =  unpack('i', self.f.read(4))[0]
 
         blocks = []
@@ -167,7 +167,7 @@ class DzhDay(object):
             block_id = unpack('h',  self.f.read(2))[0]
             if block_id != -1: # 0xff 0xff
                 blocks.append(block_id)
-            
+
         return (symbol, count, blocks)
 
     def read_block(self, block, timestamps, ohlcs):
@@ -204,7 +204,7 @@ class DzhDay(object):
 
             if rawdata == '':
                 raise EOFError
-            
+
             timestamp = unpack('i', rawdata)[0]
             if timestamp <= 0:
                 # invalid: \x00 * 4 || \xff * 4
@@ -245,7 +245,7 @@ class DzhFiveMinute(DzhDay):
 class DzhFetcher(object):
     _IPS = ('222.73.103.181', '222.73.103.183')
     _PATH = None
-    
+
     def __init__(self):
         self.ips = list(self._IPS)
         self._fetched = False
@@ -255,7 +255,7 @@ class DzhFetcher(object):
         if len(self.ips) == 0:
             raise FileNotFoundError
         return self.fetch()
-        
+
     def fetch(self):
         try:
             r = urllib2.urlopen(self.data_url())
@@ -264,25 +264,25 @@ class DzhFetcher(object):
             self._fetched = True
         except URLError:
             return self.fetch_next_server()
-    
+
     def data_url(self):
         assert self._PATH, "No file path."
-        
+
         if len(self.ips) == 0:
             return None
-        
+
         return "http://" + self.ips[-1] + self._PATH
 
-    
+
 class DzhDividend(DzhFetcher):
     '''大智慧除权数据'''
     _PATH = '/platform/download/PWR/full.PWR'
 
     def read(self):
         """Generator of 大智慧除权数据
-        
+
         Example of yield data:
-    
+
         symbol: 'SZ000001'
         dividends: [{ :date_ex_dividend => '1992-03-23',
                       :split => 0.500,
@@ -292,7 +292,7 @@ class DzhDividend(DzhFetcher):
         """
         if self._fetched == False:
             self.fetch()
-        
+
         # skip head
         self.f.seek(12, 0)
 
@@ -312,7 +312,7 @@ class DzhDividend(DzhFetcher):
         rawsymbol = self.f.read(16)
         if rawsymbol == '':
             raise EOFError
-        
+
         symbol = unpack('16s', rawsymbol)[0].replace('\x00', '')
 
         rawdate = self.f.read(4)
@@ -325,7 +325,7 @@ class DzhDividend(DzhFetcher):
         while (rawdate) != "\xff" * 4:
             dividend = np.frombuffer(rawdate + self.f.read(16), dtype=dt)
             dividends.append(dividend)
-            
+
             rawdate = self.f.read(4)
             if rawdate == '':
                 break
@@ -334,11 +334,101 @@ class DzhDividend(DzhFetcher):
 
 
 
+class DzhFin(DzhFetcher):
+    '''大智慧财务数据'''
+    _PATH = '/platform/download/FIN/full.FIN'
+
+    def read(self):
+        """Generator of 大智慧财务数据
+
+        See _read_row for data of each iter.
+        """
+        if self._fetched == False:
+            self.fetch()
+
+        # skip head
+        self.f.seek(8, 0)
+
+        try:
+            while True:
+                yield self._read_row()
+        except EOFError:
+            raise StopIteration
+        finally:
+            self.f.close()
+        #except Exception as e:
+        #    print(e)
+
+    def _read_row(self):
+        rawsymbol = self.f.read(12)
+        if rawsymbol == '':
+            raise EOFError
+
+        symbol = unpack('12s', rawsymbol)[0].replace('\x00', '')
+
+        dt = np.dtype([
+            ('report_date', np.int32), # 报告期
+            ('update_date', np.int32), # 更新日期
+            ('listing_date', np.int32), # 上市日期
+            ('MGSY', np.float32), # 每股收益, Earning Per Share
+            ('MGJZC', np.float32), # 每股净资产, 股票净值, Net assets per share
+            ('JZCSYL', np.float32), # 净资产收益率, Rate of Return, Return on equity
+            ('MGJYXJ', np.float32), # 每股经营现金 Price/cash flow ratio, Operating Cash Per Share
+            ('MGGJJ', np.float32), # 每股公积金， Provident Fund Per Share
+            ('MGWFPLR', np.float32), # 每股未分配利润, Undistributed profits per share
+            ('GDQYB', np.float32), # 股东权益比
+            ('JLRTB', np.float32), # 净利润同比
+            ('ZYSRTB', np.float32), # 主营收入同比
+            ('XSMLR', np.float32), # 销售毛利率
+            ('TZMGJZC', np.float32), # 调整每股净资产
+            ('ZZC', np.float32), # 总资产
+            ('LDZC', np.float32), # 流动资产
+            ('GDZC', np.float32), # 固定资产
+            ('WXZC', np.float32), # 无形资产
+            ('LDFZ', np.float32), # 流动负债
+            ('CQFZ', np.float32), # 长期负债
+            ('ZFZ', np.float32), # 总负债
+            ('GDQY', np.float32), # 股东权益
+            ('ZBGJJ', np.float32), # 资本公积金
+            ('JYXJLL', np.float32), # 经营现金流量
+            ('TZXJLL', np.float32), # 投资现金流量
+            ('CZXJLL', np.float32), # 筹资现金流量
+            ('XJZJE', np.float32), # 现金增加额
+            ('ZYSR', np.float32), # 主营收入
+            ('ZYLR', np.float32), # 主营利润
+            ('YYLR', np.float32), # 营业利润
+            ('TZSY', np.float32), # 投资收益
+            ('YYWSZ', np.float32), # 营业外收支
+            ('YRZE', np.float32), # 利润总额
+            ('JLR', np.float32), # 净利润
+            ('WFPLR', np.float32), # 未分配利润
+            ('ZGB', np.float32), # 总股本
+            ('WXGGHJ', np.float32), # 无限售股合计
+            ('ASHARE', np.float32), # A股
+            ('BSHARE', np.float32), # B股
+            ('JWSSG', np.float32), # 境外上市股
+            ('QTLTG', np.float32), # 其他流通股
+            ('XSGHJ', np.float32), # 限售股合计
+            ('GJCG', np.float32), # 国家持股
+            ('GYFRG', np.float32), # 国有法人股
+            ('JNFRG', np.float32), # 境内法人股
+            ('JNZRRG', np.float32), # 境内自然人股
+            ('QTFQRG', np.float32), # 其他发起人股
+            ('MJFRG', np.float32), # 募集法人股
+            ('JWFRG', np.float32), # 境外法人股
+            ('JWZRRG', np.float32), # 境外自然人股
+            ('YXGHQT', np.float32), # 优先股或其他
+            ])
+
+        row = np.frombuffer(self.f.read(len(dt) * 4), dtype=dt)
+        return (symbol, row)
+
+
 _SECTORS = ('行业', '概念', '地域',
             '证监会行业', '指数板块')
 class DzhSector(DzhFetcher):
     '''大智慧板块数据'''
-    
+
     _PATH = '/platform/download/ABK/full.ABK'
 
     def read(self):
@@ -346,7 +436,7 @@ class DzhSector(DzhFetcher):
         """
         if self._fetched == False:
             self.fetch()
-        
+
         content = self.f.read()
         file = StringIO()
         file.write(gb2utf(content))
@@ -380,7 +470,7 @@ if __name__ == '__main__':
     #     memfile = StringIO()
     #     np.save(memfile, ohlcs)
     #     client.put('DayHistory', symbol, memfile.getvalue())
-        
+
 
     io = DzhDividend()
     for data in io.read():

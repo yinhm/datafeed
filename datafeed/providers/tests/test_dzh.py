@@ -63,5 +63,18 @@ class DzhSectorTest(unittest.TestCase):
         self.assertTrue(len(options["工程建筑"]) > 0)
 
 
+class DzhFinTest(unittest.TestCase):
+
+    def test_read_generator(self):
+        io = DzhFin()
+        r = io.read()
+        data = r.next()
+        
+        self.assertEqual(data[0], "SZ000001")
+        
+        fin = data[1]
+        self.assertTrue(fin['ZZC'] > 100000)
+
+
 if __name__ == '__main__':
     unittest.main()
