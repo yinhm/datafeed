@@ -209,6 +209,9 @@ class Client(object):
     def get_dividend(self, symbol, format='npy'):
         return self.execute_command('GET_DIVIDEND', symbol, format)
 
+    def get_fin(self, symbol, format='npy'):
+        return self.execute_command('GET_FIN', symbol, format)
+
     def get_sector(self, name, format='json'):
         return self.execute_command('GET_SECTOR', name, format)
 

@@ -12,7 +12,7 @@ import time
 
 import numpy as np
 
-from datafeed.providers.dzh import DzhDividend, DzhSector
+from datafeed.providers.dzh import DzhDividend, DzhSector, DzhFin
 from datafeed.server import *
 from datafeed.utils import *
 
@@ -143,6 +143,7 @@ class ImiguHandler(Handler):
          'crontab_daily',
          'sync_dividend',
          'sync_sector',
+         'sync_fin',
          'run_task')
 
 
@@ -277,12 +278,20 @@ class ImiguHandler(Handler):
         self.application.crontab_time = time.time()
         self.sync_dividend()
         self.sync_sector()
+        self.sync_fin()
 
     def sync_dividend(self, *args):
         io = DzhDividend()
         for symbol, data in io.read():
             self.dbm.update_dividend(symbol, data)
         self.dbm.divstore.flush()
+        self.request.write_ok()
+
+    def sync_fin(self, *args):
+        io = DzhFin()
+        for symbol, data in io.read():
+            self.dbm.update_fin(symbol, data)
+        self.dbm.finstore.flush()
         self.request.write_ok()
 
     def sync_sector(self, *args):

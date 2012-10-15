@@ -317,6 +317,7 @@ class Handler(object):
                          'get_5minute',
                          'get_day',
                          'get_dividend',
+                         'get_fin',
                          'get_sector',
                          'get_stats',
                          'get_report',
@@ -470,6 +471,21 @@ class Handler(object):
                 y = self.dbm.divstore.get(symbol)[:]
             except TypeError:
                 y = np.zeros(0)
+
+            if format == 'npy':
+                memfile = StringIO()
+                np.save(memfile, y)
+                data = memfile.getvalue()
+                del(y)
+            else:
+                data = json_encode(y.tolist())
+            self._write_response(data)
+        except KeyError:
+            self.request.write("-ERR Symbol %s not exists.\r\n" % symbol)
+
+    def get_fin(self, symbol, format='npy'):
+        try:
+            y = self.dbm.finstore.get(symbol)
 
             if format == 'npy':
                 memfile = StringIO()

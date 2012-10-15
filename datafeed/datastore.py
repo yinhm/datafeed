@@ -74,6 +74,7 @@ class Manager(object):
         self._reportstore = None
         self._sectorstore = None
         self._divstore = None
+        self._finstore = None
         self._minutestore = None
 
         # HDF5 Store
@@ -93,6 +94,15 @@ class Manager(object):
             self._divstore = Dividend(self._dstore)
 
         return self._divstore
+
+    @property
+    def finstore(self):
+        '''Get FIN store instance or initialize if not present.
+        '''
+        if not self._finstore:
+            self._finstore = Fin(self._dstore)
+
+        return self._finstore
 
     @property
     def reportstore(self):
@@ -277,6 +287,9 @@ class Manager(object):
             del self.divstore[symbol]
             self.divstore[symbol] = data
 
+    def update_fin(self, symbol, data):
+        self.finstore[symbol] = data
+
     def close(self):
         logging.debug("datastore shutdown, saving data.")
         self._dstore.close()
@@ -368,6 +381,9 @@ class Sector(DictStoreNamespace):
     pass
 
 class Dividend(DictStoreNamespace):
+    pass
+
+class Fin(DictStoreNamespace):
     pass
 
 
