@@ -367,57 +367,57 @@ class DzhFin(DzhFetcher):
         symbol = unpack('12s', rawsymbol)[0].replace('\x00', '')
 
         dt = np.dtype([
-            ('report_date', np.int32), # 报告期
-            ('update_date', np.int32), # 更新日期
-            ('listing_date', np.int32), # 上市日期
-            ('MGSY', np.float32), # 每股收益, Earning Per Share
-            ('MGJZC', np.float32), # 每股净资产, 股票净值, Net assets per share
-            ('JZCSYL', np.float32), # 净资产收益率, Rate of Return, Return on equity
-            ('MGJYXJ', np.float32), # 每股经营现金 Price/cash flow ratio, Operating Cash Per Share
-            ('MGGJJ', np.float32), # 每股公积金， Provident Fund Per Share
-            ('MGWFPLR', np.float32), # 每股未分配利润, Undistributed profits per share
-            ('GDQYB', np.float32), # 股东权益比
-            ('JLRTB', np.float32), # 净利润同比
-            ('ZYSRTB', np.float32), # 主营收入同比
-            ('XSMLR', np.float32), # 销售毛利率
-            ('TZMGJZC', np.float32), # 调整每股净资产
-            ('ZZC', np.float32), # 总资产
-            ('LDZC', np.float32), # 流动资产
-            ('GDZC', np.float32), # 固定资产
-            ('WXZC', np.float32), # 无形资产
-            ('LDFZ', np.float32), # 流动负债
-            ('CQFZ', np.float32), # 长期负债
-            ('ZFZ', np.float32), # 总负债
-            ('GDQY', np.float32), # 股东权益
-            ('ZBGJJ', np.float32), # 资本公积金
-            ('JYXJLL', np.float32), # 经营现金流量
-            ('TZXJLL', np.float32), # 投资现金流量
-            ('CZXJLL', np.float32), # 筹资现金流量
-            ('XJZJE', np.float32), # 现金增加额
-            ('ZYSR', np.float32), # 主营收入
-            ('ZYLR', np.float32), # 主营利润
-            ('YYLR', np.float32), # 营业利润
-            ('TZSY', np.float32), # 投资收益
-            ('YYWSZ', np.float32), # 营业外收支
-            ('YRZE', np.float32), # 利润总额
-            ('JLR', np.float32), # 净利润
-            ('WFPLR', np.float32), # 未分配利润
-            ('ZGB', np.float32), # 总股本
-            ('WXGGHJ', np.float32), # 无限售股合计
-            ('ASHARE', np.float32), # A股
-            ('BSHARE', np.float32), # B股
-            ('JWSSG', np.float32), # 境外上市股
-            ('QTLTG', np.float32), # 其他流通股
-            ('XSGHJ', np.float32), # 限售股合计
-            ('GJCG', np.float32), # 国家持股
-            ('GYFRG', np.float32), # 国有法人股
-            ('JNFRG', np.float32), # 境内法人股
-            ('JNZRRG', np.float32), # 境内自然人股
-            ('QTFQRG', np.float32), # 其他发起人股
-            ('MJFRG', np.float32), # 募集法人股
-            ('JWFRG', np.float32), # 境外法人股
-            ('JWZRRG', np.float32), # 境外自然人股
-            ('YXGHQT', np.float32), # 优先股或其他
+            ('report_date' , np.int32),   # 0  报告发布日期
+            ('update_date' , np.int32),   # 1  更新日期
+            ('listing_date', np.int32),   # 2  上市日期
+            ('MGSY'        , np.float32), # 3  每股收益
+            ('MGJZC'       , np.float32), # 4  每股净资产, 股票净值
+            ('JZCSYL'      , np.float32), # 5  净资产收益率
+            ('MGJYXJ'      , np.float32), # 6  每股经营现金
+            ('MGGJJ'       , np.float32), # 7  每股公积金
+            ('MGWFPLR'     , np.float32), # 8  每股未分配利润
+            ('GDQYB'       , np.float32), # 9  股东权益比
+            ('JLRTB'       , np.float32), # 10 净利润同比
+            ('ZYSRTB'      , np.float32), # 11 主营收入同比
+            ('XSMLR'       , np.float32), # 12 销售毛利率
+            ('TZMGJZC'     , np.float32), # 13 调整每股净资产
+            ('ZZC'         , np.float32), # 14 总资产
+            ('LDZC'        , np.float32), # 15 流动资产
+            ('GDZC'        , np.float32), # 16 固定资产
+            ('WXZC'        , np.float32), # 17 无形资产
+            ('LDFZ'        , np.float32), # 18 流动负债
+            ('CQFZ'        , np.float32), # 19 长期负债
+            ('ZFZ'         , np.float32), # 20 总负债
+            ('GDQY'        , np.float32), # 21 股东权益
+            ('ZBGJJ'       , np.float32), # 22 资本公积金
+            ('JYXJLL'      , np.float32), # 23 经营现金流量
+            ('TZXJLL'      , np.float32), # 24 投资现金流量
+            ('CZXJLL'      , np.float32), # 25 筹资现金流量
+            ('XJZJE'       , np.float32), # 26 现金增加额
+            ('ZYSR'        , np.float32), # 27 主营收入
+            ('ZYLR'        , np.float32), # 28 主营利润
+            ('YYLR'        , np.float32), # 29 营业利润
+            ('TZSY'        , np.float32), # 30 投资收益
+            ('YYWSZ'       , np.float32), # 31 营业外收支
+            ('YRZE'        , np.float32), # 32 利润总额
+            ('JLR'         , np.float32), # 33 净利润
+            ('WFPLR'       , np.float32), # 34 未分配利润
+            ('ZGB'         , np.float32), # 35 总股本
+            ('WXGGHJ'      , np.float32), # 36 无限售股合计
+            ('ASHARE'      , np.float32), # 37 A股
+            ('BSHARE'      , np.float32), # 38 B股
+            ('JWSSG'       , np.float32), # 39 境外上市股
+            ('QTLTG'       , np.float32), # 40 其他流通股
+            ('XSGHJ'       , np.float32), # 41 限售股合计
+            ('GJCG'        , np.float32), # 42 国家持股
+            ('GYFRG'       , np.float32), # 43 国有法人股
+            ('JNFRG'       , np.float32), # 44 境内法人股
+            ('JNZRRG'      , np.float32), # 45 境内自然人股
+            ('QTFQRG'      , np.float32), # 46 其他发起人股
+            ('MJFRG'       , np.float32), # 47 募集法人股
+            ('JWFRG'       , np.float32), # 48 境外法人股
+            ('JWZRRG'      , np.float32), # 49 境外自然人股
+            ('YXGHQT'      , np.float32), # 50 优先股或其他
             ])
 
         row = np.frombuffer(self.f.read(len(dt) * 4), dtype=dt)
