@@ -639,7 +639,7 @@ class Minute(object):
 
     def __init__(self, store, date, shape_x):
         assert isinstance(date, datetime.date)
-        logging.info("==> Load %s at %s" % (str(store), str(date)))
+        logging.debug("==> Load %s at %s" % (str(store), str(date)))
         self.store = store
         self.date = date
         # TBD: minsnap/date will created on init, this may end with junk datasets
