@@ -20,8 +20,8 @@ class Dividend(object):
         """
         assert div['time'] > 0
         assert abs(div['split']) > 0 or \
-               abs(div['purchase']) > 0 or \
-               abs(div['dividend']) > 0
+            abs(div['purchase']) > 0 or \
+            abs(div['dividend']) > 0
 
         self._npd = div
 
@@ -99,6 +99,8 @@ def adjust(y, divs):
     y['adjclose'] = y['close']
 
     for div in divs:
+        if div['split'] * div['purchase'] * div['dividend'] == 0:
+            continue
         d = Dividend(div)
         d.adjust(y)
 
