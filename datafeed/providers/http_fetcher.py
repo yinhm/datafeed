@@ -44,6 +44,8 @@ class Fetcher(object):
         self._time_out = time_out
         self._max_clients = max_clients
 
+        self._io_loop = ioloop.IOLoop()
+
         self.queue_len = 0
 
     def fetch(self, *args, **kwargs):
@@ -53,7 +55,7 @@ class Fetcher(object):
         
         urls = self._fetching_urls(*args, **kwargs)
 
-        http = AsyncHTTPClient()
+        http = AsyncHTTPClient(self._io_loop)
         i = 0
         for url in urls:
             callback = self._callback(args[i], **kwargs)
@@ -62,7 +64,7 @@ class Fetcher(object):
             self.queue_len = self.queue_len + 1
             i += 1
 
-        ioloop.IOLoop.instance().start()
+        self._io_loop.start()
         return ret
 
     def _fetching_urls(self, *args, **kwargs):
@@ -76,7 +78,7 @@ class Fetcher(object):
 
     def stop(self):
         if self.queue_len == 0:
-            ioloop.IOLoop.instance().stop()
+            self._io_loop.stop()
 
 
 class DayFetcher(Fetcher):
