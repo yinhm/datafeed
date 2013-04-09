@@ -167,6 +167,9 @@ class Client(object):
     def auth(self):
         self.execute_command('AUTH', self._password, 'plain')
 
+    def get_mtime(self):
+        return self.execute_command('GET_MTIME')
+
     def get_list(self, match='', format='json'):
         return self.execute_command('GET_LIST', match, format)
 
