@@ -148,6 +148,9 @@ class Client(object):
         # single value
         elif reply_type == '+':
             return response
+        # integer value
+        elif reply_type == ':':
+            return int(response)
         # bulk response
         elif reply_type == '$':
             length = int(response)
@@ -168,7 +171,7 @@ class Client(object):
         self.execute_command('AUTH', self._password, 'plain')
 
     def get_mtime(self):
-        return self.execute_command('GET_MTIME')
+        return self.execute_command('GET_MTIME', 'plain')
 
     def get_list(self, match='', format='json'):
         return self.execute_command('GET_LIST', match, format)
@@ -211,6 +214,9 @@ class Client(object):
 
     def get_dividend(self, symbol, format='npy'):
         return self.execute_command('GET_DIVIDEND', symbol, format)
+
+    def get_fin(self, symbol, format='npy'):
+        return self.execute_command('GET_FIN', symbol, format)
 
     def get_sector(self, name, format='json'):
         return self.execute_command('GET_SECTOR', name, format)
