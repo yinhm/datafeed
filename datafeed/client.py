@@ -10,6 +10,13 @@ from cStringIO import StringIO
 from datafeed.utils import json_decode
 
 
+__all__ = ['Client', 'ConnectionError']
+
+
+class ConnectionError(Exception):
+    pass
+
+
 class Client(object):
     """Manages Tcp communication to and from a datafeed server.
     """
@@ -37,7 +44,7 @@ class Client(object):
             else:
                 error_message = "Error %s connecting %s:%s. %s." % \
                     (e.args[0], self._host, self._port, e.args[1])
-            raise StandardError(error_message)
+            raise ConnectionError(error_message)
         sock.setsockopt(socket.SOL_TCP, socket.TCP_NODELAY, 1)
         sock.settimeout(self._socket_timeout)
         self._sock = sock
