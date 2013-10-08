@@ -99,7 +99,10 @@ import numpy as np
 
 from tornado import iostream
 from tornado import stack_context
-from tornado.netutil import TCPServer
+try:
+    from tornado.tcpserver import TCPServer # tornado 3.x
+except ImportError:
+    from tornado.netutil import TCPServer # tornado 2.x
 
 from datafeed import datastore
 from datafeed.utils import json_encode
