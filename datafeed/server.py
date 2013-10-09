@@ -574,7 +574,8 @@ class Handler(object):
         parse_time = 1000.0 * (end_time - start_time)
         logging.info("proto parse: %.2fms", parse_time)
         
-        func(symbol, data)
+        if data != None:
+            func(symbol, data)
 
         self.request.write("+OK\r\n")
 

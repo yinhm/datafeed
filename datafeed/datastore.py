@@ -529,6 +529,9 @@ class Day(OHLC):
         - `npydata`: data of npy file.
         """
         prev_year = None
+        ds = None
+        newdata = None
+
         for row in data:
             day = datetime.datetime.fromtimestamp(row['time'])
             isoyear = day.isocalendar()[0]
@@ -546,7 +549,8 @@ class Day(OHLC):
                 logging.error("IndexError on: %s, %s, %s" % (symbol, isoyear, day))
             prev_year = isoyear
 
-        ds[:] = newdata
+        if ds != None and newdata != None:
+            ds[:] = newdata
 
         self.flush()
         return True
