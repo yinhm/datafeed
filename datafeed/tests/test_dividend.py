@@ -113,7 +113,6 @@ class DividendTest(unittest.TestCase):
         adjclose = y.xs(datetime.datetime(2010, 6, 24))['adjclose']
         self.assertTrue(self.floatEqual(adjclose, 13.07))
 
-
     def test_adjust_purchase(self):
         ohlcs = np.array([
                 (1216915200, 24.889999389648438, 25.450000762939453,
@@ -173,6 +172,16 @@ class DividendTest(unittest.TestCase):
 
         frame = adjust(ohlcs, dividends)
         self.assertEqual(frame.index[0].date(), datetime.date(2003, 2, 13))
+
+        expected = ['open', 'high', 'low', 'close',
+                    'volume', 'amount', 'adjclose']
+        self.assert_(np.array_equal(frame.columns, expected))
+
+        expected = ['Open', 'High', 'Low', 'Close',
+                    'Volume', 'Adjusted']
+        frame = adjust(ohlcs, [], capitalize=True)
+        self.assert_(np.array_equal(frame.columns, expected))
+
 
 if __name__ == '__main__':
     unittest.main()

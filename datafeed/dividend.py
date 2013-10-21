@@ -84,7 +84,7 @@ class Dividend(object):
         return datetime.datetime.combine(date, datetime.time())
 
 
-def adjust(y, divs):
+def adjust(y, divs, capitalize=False):
     """Return fully adjusted OHLCs data base on dividends
 
     Paramaters:
@@ -111,4 +111,10 @@ def adjust(y, divs):
     frame['low'] = frame['low'] * factor
     frame['close'] = frame['close'] * factor
     frame['volume'] = frame['volume'] * (1 / factor)
+
+    if capitalize:
+        columns = [k.capitalize() for k in frame.columns]
+        columns[-1] = 'Adjusted'
+        frame.columns = columns
+        del(frame['Amount'])
     return frame
