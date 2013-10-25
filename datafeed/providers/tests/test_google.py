@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from __future__ import with_statement
 
 import os
@@ -104,7 +106,7 @@ class GoogleReportTest(unittest.TestCase):
 class GoogleDayTest(unittest.TestCase):
     def test_parse_day(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        f = open(os.path.join(path + 'google_data.csv'), 'r')
+        f = open(os.path.join(path, 'google_data.csv'), 'r')
         data = f.read()
         f.close()
 
