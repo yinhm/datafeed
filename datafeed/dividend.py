@@ -99,7 +99,7 @@ def adjust(y, divs, capitalize=False):
     y['adjclose'] = y['close']
 
     for div in divs:
-        if div['split'] * div['purchase'] * div['dividend'] == 0:
+        if div['split'] + div['purchase'] + div['dividend'] == 0:
             continue
         d = Dividend(div)
         d.adjust(y)
