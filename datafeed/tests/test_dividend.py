@@ -177,10 +177,32 @@ class DividendTest(unittest.TestCase):
                     'volume', 'amount', 'adjclose']
         self.assert_(np.array_equal(frame.columns, expected))
 
+        day = frame.ix[datetime.datetime(2003, 2, 13)]
+        self.assertTrue(self.floatEqual(day['adjclose'], 23.415))
+
         expected = ['Open', 'High', 'Low', 'Close',
                     'Volume', 'Adjusted']
         frame = adjust(ohlcs, [], capitalize=True)
         self.assert_(np.array_equal(frame.columns, expected))
+
+    def test_adjust_func_should_not_skipped(self):
+        y = np.array([
+            (1326643200, 22.50, 22.91, 20.65, 20.71, 4551.0, 9873878.0),
+            (1326729600, 21.75, 22.78, 21.40, 22.78, 6053.0, 13547097.0),
+            (1326816000, 23.90, 24.77, 22.0, 22.5, 11126.0, 26537980.0),
+            (1326902400, 22.5, 23.98, 22.05, 23.55, 5983.0, 13886342.0),
+            (1326988800, 23.56, 23.90, 23.35, 23.70, 3832.0, 9089978.0)
+          ], dtype=Day.DTYPE)
+
+        dividends = np.array([
+            (1369008000, 0.5, 0.0, 0.0, 0.15),
+            (1340064000, 1.0, 0.0, 0.0, 0.20)
+        ], dtype=self.dtype)
+
+        frame = adjust(y, dividends)
+
+        day = frame.ix[datetime.datetime(2012, 1, 20)]
+        self.assertTrue(self.floatEqual(day['close'], 7.75))
 
 
 if __name__ == '__main__':
