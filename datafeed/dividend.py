@@ -35,6 +35,9 @@ class Dividend(object):
         if self.ex_date <= frame.index[0].date(): # no adjustment needed
             return True
 
+        if self.ex_date > frame.index[-1].date(): # not mature?
+            return True
+
         self._divide(frame)
         self._split(frame)
 
