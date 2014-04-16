@@ -187,7 +187,7 @@ class Manager(object):
             OneMinute instance.
         '''
         if not self._1minstore:
-            self._1minstore = OneMinute(self._store)
+            self._1minstore = OneMinute(self._store, self.exchange.market_minutes)
 
         return self._1minstore
 
@@ -199,7 +199,7 @@ class Manager(object):
             FiveMinute instance.
         '''
         if not self._5minstore:
-            self._5minstore = FiveMinute(self._store)
+            self._5minstore = FiveMinute(self._store, self.exchange.market_minutes)
 
         return self._5minstore
 
@@ -379,7 +379,7 @@ class OHLC(object):
 
     _handle = None
 
-    def __init__(self, store):
+    def __init__(self, store, shape_x=None):
         '''Init day store from handle.
 
         Handle should be in each implementors namespace, eg:
@@ -389,6 +389,7 @@ class OHLC(object):
           5min: /5min
         '''
         self.store = store
+        self.shape_x = shape_x
 
     def __nonzero__(self):
         "Truth value testing."
@@ -449,6 +450,8 @@ class OHLC(object):
     def _require_dataset(self, symbol, date, shape):
         '''Require dateset for a specific symbol on the given date.'''
         key = self._key(symbol, date)
+        if self.shape_x:
+            shape = (self.shape_x, )
         return self.handle.require_dataset(key,
                                            shape,
                                            dtype=self.DTYPE)

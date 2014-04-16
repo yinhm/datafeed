@@ -247,6 +247,21 @@ class OneMinuteTest(unittest.TestCase):
         np.testing.assert_array_equal(y, x[2:])
 
 
+    def test_update_partial_day_data(self):
+        market_minutes = 60 * 24 # assume 1min data
+        store = OneMinute(h5py.File('%s/data.h5' % helper.datadir),
+                          market_minutes)
+
+        key = '999'
+        path = os.path.dirname(os.path.realpath(__file__))
+        data = np.load(os.path.join(path, '001.npy'))
+
+        store.update(key, data)
+
+        date = datetime.fromtimestamp(1397621820).date()
+        y = store.get(key, date)
+        np.testing.assert_array_equal(data, y)
+
 class FiveMinuteTest(unittest.TestCase):
 
     def setUp(self):
