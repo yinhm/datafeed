@@ -35,13 +35,19 @@ class Dividend(object):
         if self.ex_date <= frame.index[0].date(): # no adjustment needed
             return True
 
-        if self.ex_date > frame.index[-1].date(): # not mature?
+        if self.ex_date > datetime.date.today(): # not mature
             return True
 
         self._divide(frame)
         self._split(frame)
 
     def _divide(self, frame):
+        """divided close price to adjclose column
+
+        WARNING
+        =======
+        frame should be chronological ordered otherwise wrong backfill.
+        """
         if self.cash_afterward == 0:
             return
 

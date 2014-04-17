@@ -197,7 +197,7 @@ class Manager(object):
             OneMinute instance.
         '''
         if not self._1minstore:
-            self._1minstore = OneMinute(self._store)
+            self._1minstore = OneMinute(self._store, self.exchange.market_minutes)
 
         return self._1minstore
 
@@ -209,7 +209,7 @@ class Manager(object):
             FiveMinute instance.
         '''
         if not self._5minstore:
-            self._5minstore = FiveMinute(self._store)
+            self._5minstore = FiveMinute(self._store, self.exchange.market_minutes)
 
         return self._5minstore
 
@@ -393,9 +393,10 @@ class OHLC(object):
     DTYPE = np.dtype({'names': ('time', 'open', 'high', 'low', 'close', 'volume', 'amount'),
                       'formats': ('i4', 'f4', 'f4', 'f4', 'f4', 'f4', 'f4')})
 
+    time_interval = 60 # default to 60 seconds(1min)
     _handle = None
 
-    def __init__(self, store):
+    def __init__(self, store, market_minutes=None):
         '''Init day store from handle.
 
         Handle should be in each implementors namespace, eg:
@@ -405,6 +406,10 @@ class OHLC(object):
           5min: /5min
         '''
         self.store = store
+
+        self.shape_x = None
+        if market_minutes:
+            self.shape_x = market_minutes / (self.time_interval / 60)
 
     def __nonzero__(self):
         "Truth value testing."
@@ -430,6 +435,16 @@ class OHLC(object):
         return self.handle[key][:]
 
     def update(self, symbol, quotes):
+        """Archive daily ohlcs, override if datasets exists."""
+        assert quotes['time'][0] < quotes['time'][1], \
+            'Data are not chronological ordered.'
+
+        if self.shape_x:
+            self._update_multi(symbol, quotes)
+        else:
+            self._update(symbol, quotes)
+
+    def _update(self, symbol, quotes):
         """Archive daily ohlcs, override if datasets exists.
 
         Arguments:
@@ -462,9 +477,53 @@ class OHLC(object):
             ds[:] = sliced_qs
             pre_index = i
 
-    def _require_dataset(self, symbol, date, shape):
+    def _update_multi(self, symbol, quotes):
+        """Archive multiday ohlcs, override if datasets exists.
+
+        Arguments:
+          symbol: Stock instrument.
+          quotes: numpy quotes data.
+        """
+        i = 0
+        pre_day = None
+        indexes = []
+        indexes.append([0, len(quotes)])
+        for row in quotes:
+            day = datetime.datetime.fromtimestamp(row['time']).day
+            if pre_day and pre_day != day:
+                # found next day boundary
+                indexes[-1][1] = i
+                indexes.append([i, len(quotes)])
+            i += 1
+            pre_day = day
+
+        print indexes
+
+        for i0, i1 in indexes:
+            t0, t1 = quotes[i0]['time'], quotes[i1-1]['time']
+            dt = datetime.datetime.fromtimestamp(t0)
+            dsi0, dsi1 = self.timestamp_to_index(dt, t0), self.timestamp_to_index(dt, t1)
+
+            sliced = quotes[i0:i1]
+            ds = self._require_dataset(symbol, dt.date(), sliced.shape)
+
+            if dsi0 != 0:
+                dsi1 = dsi1 + 1
+            print "ds[%d:%d] = quotes[%d:%d]" % (dsi0, dsi1, i0, i1)
+            ds[dsi0:dsi1] = sliced
+
+    def timestamp_to_index(self, dt, ts):
+        day_start = time.mktime((dt.year, dt.month, dt.day,
+                                 0, 0, 0, 0, 0, 0))
+        return int((ts - day_start) / self.time_interval)
+
+    def _require_dataset(self, symbol, date, shape=None):
         '''Require dateset for a specific symbol on the given date.'''
+        assert self.shape_x or shape
+
         key = self._key(symbol, date)
+        if self.shape_x:
+            shape = (self.shape_x, )
         return self.handle.require_dataset(key,
                                            shape,
                                            dtype=self.DTYPE)
@@ -627,6 +686,7 @@ class FiveMinute(OHLC):
         5min/SH000001/20090101
         5min/SH000001/20090102
     '''
+    time_interval = 5 * 60
 
     @property
     def handle(self):
