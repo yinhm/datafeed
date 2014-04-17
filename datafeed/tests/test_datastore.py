@@ -246,11 +246,12 @@ class OneMinuteTest(unittest.TestCase):
         y = self.store.get(key, date)
         np.testing.assert_array_equal(y, x[2:])
 
-
-    def test_update_partial_day_data(self):
+    def test_update_partial_data(self):
         market_minutes = 60 * 24 # assume 1min data
         store = OneMinute(h5py.File('%s/data.h5' % helper.datadir),
                           market_minutes)
+        self.assertEqual(store.time_interval, 60)
+        self.assertEqual(store.shape_x, 1440)
 
         key = '999'
         path = os.path.dirname(os.path.realpath(__file__))
@@ -260,7 +261,10 @@ class OneMinuteTest(unittest.TestCase):
 
         date = datetime.fromtimestamp(1397621820).date()
         y = store.get(key, date)
-        np.testing.assert_array_equal(data, y)
+        row1, row2 = y[737], y[1036]
+        np.testing.assert_array_equal(row1, data[0])
+        np.testing.assert_array_equal(row2, data[-1])
+
 
 class FiveMinuteTest(unittest.TestCase):
 
@@ -311,6 +315,27 @@ class FiveMinuteTest(unittest.TestCase):
         date = datetime.fromtimestamp(1316588400).date()
         y = self.store.get(key, date)
         np.testing.assert_array_equal(y, x[2:])
+
+    def test_update_multi_partial_days_data(self):
+        market_minutes = 1440 # 5min data
+        store = FiveMinute(h5py.File('%s/data.h5' % helper.datadir),
+                           market_minutes)
+        self.assertEqual(store.time_interval, 300)
+        self.assertEqual(store.shape_x, 288)
+
+        key = '999'
+        path = os.path.dirname(os.path.realpath(__file__))
+        data = np.load(os.path.join(path, '005.npy'))
+
+        store.update(key, data)
+
+        date = datetime.fromtimestamp(data[0]['time']).date()
+        y1 = store.get(key, date)
+        np.testing.assert_array_equal(y1[196], data[0])
+
+        date = datetime.fromtimestamp(data[-1]['time']).date()
+        y2 = store.get(key, date)
+        np.testing.assert_array_equal(y2[206], data[-1])
 
 
 class MinuteSnapshotCacheTest(unittest.TestCase):
