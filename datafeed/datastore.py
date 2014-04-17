@@ -497,8 +497,6 @@ class OHLC(object):
             i += 1
             pre_day = day
 
-        print indexes
-
         for i0, i1 in indexes:
             t0, t1 = quotes[i0]['time'], quotes[i1-1]['time']
             dt = datetime.datetime.fromtimestamp(t0)
@@ -509,8 +507,15 @@ class OHLC(object):
 
             if dsi0 != 0:
                 dsi1 = dsi1 + 1
-            print "ds[%d:%d] = quotes[%d:%d]" % (dsi0, dsi1, i0, i1)
-            ds[dsi0:dsi1] = sliced
+            logging.debug("ds[%d:%d] = quotes[%d:%d]" % (dsi0, dsi1, i0, i1))
+            try:
+                ds[dsi0:dsi1] = sliced
+            except TypeError:
+                logging.debug("data may have holes")
+                for row in sliced:
+                    r_dsi = self.timestamp_to_index(dt, row['time'])
+                    # logging.debug("r_dsi: %d" % r_dsi)
+                    ds[r_dsi] = row
 
     def timestamp_to_index(self, dt, ts):
         day_start = time.mktime((dt.year, dt.month, dt.day,
