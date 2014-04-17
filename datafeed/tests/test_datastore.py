@@ -323,7 +323,7 @@ class FiveMinuteTest(unittest.TestCase):
         self.assertEqual(store.time_interval, 300)
         self.assertEqual(store.shape_x, 288)
 
-        key = '999'
+        key = '9991'
         path = os.path.dirname(os.path.realpath(__file__))
         data = np.load(os.path.join(path, '005.npy'))
 
@@ -336,6 +336,25 @@ class FiveMinuteTest(unittest.TestCase):
         date = datetime.fromtimestamp(data[-1]['time']).date()
         y2 = store.get(key, date)
         np.testing.assert_array_equal(y2[206], data[-1])
+
+    def test_update_multi_hold_data(self):
+        market_minutes = 1440 # 5min data
+        store = FiveMinute(h5py.File('%s/data.h5' % helper.datadir),
+                           market_minutes)
+        key = '9992'
+        path = os.path.dirname(os.path.realpath(__file__))
+        data = np.load(os.path.join(path, '005_na.npy'))
+
+        store.update(key, data)
+
+        date = datetime.fromtimestamp(data[-1]['time']).date()
+        y2 = store.get(key, date)
+
+        # Data has holes between index 171 and index 172.
+        np.testing.assert_array_equal(y2[0], data[132])
+        np.testing.assert_array_equal(y2[167], data[-1])
+        np.testing.assert_array_equal(y2[39], data[171])
+        np.testing.assert_array_equal(y2[43], data[172])
 
 
 class MinuteSnapshotCacheTest(unittest.TestCase):
