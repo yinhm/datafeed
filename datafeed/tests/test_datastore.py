@@ -141,12 +141,12 @@ class DictStoreNamespaceTest(unittest.TestCase):
         self.assertEqual(self.impl.get('k12'), 'v21')
 
 
-class ReportTest(unittest.TestCase):
+class TickTest(unittest.TestCase):
 
     def test_init_store(self):
         filename = '%s/dstore.dump' % helper.datadir
         store = DictStore.open(filename)
-        rstore = Report(store)
+        rstore = Tick(store)
         sample = helper.sample()
 
         rstore.update(sample)
@@ -158,7 +158,7 @@ class ReportTest(unittest.TestCase):
         self.assertRaises(AssertionError, rstore.get, key)
 
         store = DictStore.open(filename)
-        rstore = Report(store)
+        rstore = Tick(store)
         self.assertEqual(rstore[key], sample[key])
 
 

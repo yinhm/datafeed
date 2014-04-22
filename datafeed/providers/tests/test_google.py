@@ -44,7 +44,7 @@ class GoogleSecurityTest(unittest.TestCase):
         self.assertEqual(ret, [('A', 'B', 'C'), ('E', 'D', None)])
 
 
-class GoogleReportTest(unittest.TestCase):
+class GoogleTickTest(unittest.TestCase):
     _RAW_DATA = '// [ { "id": "7521596" ,"t" : "000001" ,"e" : "SHA" ,"l" : "2,925.53" ,"l_cur" : "CN¥2,925.53" ,"s": "0" ,"ltt":"3:00PM CST" ,"lt" : "Apr 27, 3:00PM CST" ,"c" : "-13.46" ,"cp" : "-0.46" ,"ccol" : "chr" ,"eo" : "" ,"delay": "" ,"op" : "2,946.33" ,"hi" : "2,961.13" ,"lo" : "2,907.66" ,"vo" : "105.49M" ,"avvo" : "" ,"hi52" : "3,478.01" ,"lo52" : "1,844.09" ,"mc" : "" ,"pe" : "" ,"fwpe" : "" ,"beta" : "" ,"eps" : "" ,"name" : "SSE Composite Index" ,"type" : "Company" } ,{ "id": "697073" ,"t" : "600028" ,"e" : "SHA" ,"l" : "8.64" ,"l_cur" : "CN¥8.64" ,"s": "0" ,"ltt":"3:00PM CST" ,"lt" : "Apr 29, 3:00PM CST" ,"c" : "+0.12" ,"cp" : "1.41" ,"ccol" : "chg" ,"eo" : "" ,"delay": "" ,"op" : "8.57" ,"hi" : "8.66" ,"lo" : "8.53" ,"vo" : "42.28M" ,"avvo" : "" ,"hi52" : "10.09" ,"lo52" : "7.67" ,"mc" : "749.11B" ,"pe" : "10.70" ,"fwpe" : "" ,"beta" : "" ,"eps" : "0.81" ,"name" : "China Petroleum \x26 Chemical Corporation" ,"type" : "Company" } ,{ "id": "694653" ,"t" : "GOOG" ,"e" : "NASDAQ" ,"l" : "532.82" ,"l_cur" : "532.82" ,"s": "1" ,"ltt":"4:00PM EDT" ,"lt" : "Apr 26, 4:00PM EDT" ,"c" : "+7.77" ,"cp" : "1.48" ,"ccol" : "chg" ,"el": "535.97" ,"el_cur": "535.97" ,"elt" : "Apr 27, 4:15AM EDT" ,"ec" : "+3.15" ,"ecp" : "0.59" ,"eccol" : "chg" ,"div" : "" ,"yld" : "" ,"eo" : "" ,"delay": "" ,"op" : "526.52" ,"hi" : "537.44" ,"lo" : "525.21" ,"vo" : "100.00" ,"avvo" : "2.80M" ,"hi52" : "642.96" ,"lo52" : "433.63" ,"mc" : "171.31B" ,"pe" : "19.53" ,"fwpe" : "" ,"beta" : "1.19" ,"eps" : "27.28" ,"name" : "Google Inc." ,"type" : "Company" } ]'
 
 
@@ -53,8 +53,8 @@ class GoogleReportTest(unittest.TestCase):
         self.assertEqual(currency2float("12,313.66"), 12313.66)
         self.assertEqual(currency2float("102.5M"), 102500000)
     
-    def test_google_report(self):
-        ret = GoogleReport.parse(self._RAW_DATA)
+    def test_google_tick(self):
+        ret = GoogleTick.parse(self._RAW_DATA)
         i = 0
         for r in ret:
             if i == 0:
@@ -80,10 +80,10 @@ class GoogleReportTest(unittest.TestCase):
 
             i += 1
 
-    def test_google_report_parse_with_excption(self):
+    def test_google_tick_parse_with_excption(self):
         data = '// [ { "id": "694653" ,"t" : "GOOG" ,"e" : "NASDAQ" ,"l" : "520.90" ,"l_cur" : "520.90" ,"s": "0" ,"ltt":"4:00PM EDT" ,"lt" : "May 27, 4:00PM EDT" ,"c" : "+2.77" ,"cp" : "0.53" ,"ccol" : "chg" ,"eo" : "" ,"delay": "" ,"op" : "518.48" ,"hi" : "521.79" ,"lo" : "516.30" ,"vo" : "1.75M" ,"avvo" : "2.91M" ,"hi52" : "642.96" ,"lo52" : "433.63" ,"mc" : "167.86B" ,"pe" : "20.23" ,"fwpe" : "" ,"beta" : "1.17" ,"eps" : "25.75" ,"name" : "Google Inc." ,"type" : "Company" } ,{ "id": "697227" ,"t" : "FRCMQ" ,"e" : "PINK" ,"l" : "0.0045" ,"l_cur" : "0.00" ,"s": "0" ,"ltt":"2:13PM EST" ,"lt" : "Jan 24, 2:13PM EST" ,"c" : "0.0000" ,"cp" : "0.00" ,"ccol" : "chb" ,"eo" : "" ,"delay": "15" ,"op" : "" ,"hi" : "" ,"lo" : "" ,"vo" : "0.00" ,"avvo" : "1.17M" ,"hi52" : "0.14" ,"lo52" : "0.00" ,"mc" : "404,839.00" ,"pe" : "0.00" ,"fwpe" : "" ,"beta" : "1.30" ,"eps" : "7.57" ,"name" : "Fairpoint Communications, Inc." ,"type" : "Company" } ,{ "id": "5521731" ,"t" : "APPL" ,"e" : "PINK" ,"l" : "0.0000" ,"l_cur" : "0.00" ,"s": "0" ,"ltt":"" ,"lt" : "" ,"c" : "" ,"cp" : "" ,"ccol" : "" ,"eo" : "" ,"delay": "15" ,"op" : "" ,"hi" : "" ,"lo" : "" ,"vo" : "0.00" ,"avvo" : "" ,"hi52" : "" ,"lo52" : "" ,"mc" : "" ,"pe" : "" ,"fwpe" : "" ,"beta" : "" ,"eps" : "" ,"name" : "APPELL PETE CORP" ,"type" : "Company" } ]'
 
-        iterable = GoogleReport.parse(data)
+        iterable = GoogleTick.parse(data)
 
         i = 0
         while 1:
@@ -125,16 +125,16 @@ class GoogleDayTest(unittest.TestCase):
             i += 1
 
 
-class GoogleReportFetcherTest(unittest.TestCase):
+class GoogleTickFetcherTest(unittest.TestCase):
 
     def test_init(self):
-        f = GoogleReportFetcher()
+        f = GoogleTickFetcher()
         self.assertEqual(f._base_url, 'http://www.google.com/finance/info')
         self.assertEqual(f._time_out, 20)
         self.assertEqual(f._request_size, 100)
 
     def test_init_with_arguments(self):
-        f = GoogleReportFetcher(base_url='http://www.google.com.hk/finance/info',
+        f = GoogleTickFetcher(base_url='http://www.google.com.hk/finance/info',
                                 time_out=10,
                                 request_size=50)
         self.assertEqual(f._base_url, 'http://www.google.com.hk/finance/info')
@@ -143,17 +143,17 @@ class GoogleReportFetcherTest(unittest.TestCase):
         
     def test_init_with_wrong_arguments(self):
         self.assertRaises(AssertionError,
-                          GoogleReportFetcher,
+                          GoogleTickFetcher,
                           request_size=200)
         
     def test_fetch(self):
-        f = GoogleReportFetcher(request_size=2)
+        f = GoogleTickFetcher(request_size=2)
         s1 = GoogleSecurity(SH(), '000001')
         s2 = GoogleSecurity(SH(), '600028')
         s3 = GoogleSecurity(NASDAQ(), 'GOOG')
 
         def callback(body):
-            qs = GoogleReport.parse(body)
+            qs = GoogleTick.parse(body)
             for quote in qs:
                 if quote.security == s1:
                     # something must wrong if SSE Composite Index goes down to 100
@@ -168,10 +168,10 @@ class GoogleReportFetcherTest(unittest.TestCase):
 
         symbols = [GoogleSecurity.from_string(s) for s in symbols]
 
-        f = GoogleReportFetcher()
+        f = GoogleTickFetcher()
 
         def callback(body):
-            rs = GoogleReport.parse(body)
+            rs = GoogleTick.parse(body)
             for r in rs:
                 pass
 
@@ -188,7 +188,7 @@ class GoogleDayFetcherTest(unittest.TestCase):
 
     def test_init_with_wrong_arguments(self):
         self.assertRaises(AssertionError,
-                          GoogleReportFetcher,
+                          GoogleTickFetcher,
                           max_clients=20)
         
     def test_fetch(self):

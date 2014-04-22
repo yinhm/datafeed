@@ -183,15 +183,21 @@ class Client(object):
     def get_list(self, match='', format='json'):
         return self.execute_command('GET_LIST', match, format)
 
-    def get_report(self, symbol, format='json'):
-        return self.execute_command('GET_REPORT', symbol, format)
+    def get_tick(self, symbol, format='json'):
+        return self.execute_command('GET_TICK', symbol, format)
 
-    def get_reports(self, *args, **kwargs):
+    def get_report(self, *args, **kwds):
+        return self.get_tick(*args, **kwds)
+
+    def get_ticks(self, *args, **kwargs):
         format = 'json'
         if 'format' in kwargs:
             format = kwargs['format']
         args = args + (format,)
-        return self.execute_command('GET_REPORTS', *args)
+        return self.execute_command('GET_TICKS', *args)
+
+    def get_reports(self, *args, **kwds):
+        return self.get_ticks(*args, **kwds)
 
     def get_minute(self, symbol, timestamp=0, format='npy'):
         """Get minute history data.
@@ -231,10 +237,13 @@ class Client(object):
     def get_stats(self):
         return self.execute_command('GET_STATS', 'json')
 
-    def put_reports(self, adict):
+    def put_ticks(self, adict):
         assert isinstance(adict, dict)
         data = zlib.compress(marshal.dumps(adict))
-        return self.execute_command('PUT_REPORTS', data, 'zip')
+        return self.execute_command('PUT_TICKS', data, 'zip')
+
+    def put_reports(self, *args, **kwds):
+        return self.put_ticks(*args, **kwds)
 
     def put_minute(self, symbol, rawdata):
         memfile = StringIO()

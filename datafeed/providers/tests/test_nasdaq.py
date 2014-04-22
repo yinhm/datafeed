@@ -23,7 +23,7 @@ class NasdaqListTest(unittest.TestCase):
 "AHC","A.H. Belo Corporation","6.83","130575940","n/a","Consumer Services","Newspapers/Magazines","http://quotes.nasdaq.com/asp/SummaryQuote.asp?symbol=AHC&selected=AHC",'''
 
 
-    def test_nasdaq_report(self):
+    def test_nasdaq_tick(self):
         ret = NasdaqList.parse(NYSE(), self._RAW_DATA)
         i = 0
         for r in ret:

@@ -48,16 +48,16 @@ class ClientTest(unittest.TestCase):
                 'volume': 75147848.0
                 }
             }
-        self.client.put_reports(d)
+        self.client.put_ticks(d)
 
     def test_connect(self):
         self.client.connect()
         self.assertTrue(isinstance(self.client._sock, socket._socketobject))
 
-    def test_put_reports(self):
+    def test_put_ticks(self):
         path = os.path.dirname(os.path.realpath(__file__))
-        r = self.client.get_report('SH000001')
-        f = open(os.path.join(path, 'reports.dump'), 'r')
+        r = self.client.get_tick('SH000001')
+        f = open(os.path.join(path, 'ticks.dump'), 'r')
         data = marshal.load(f)
         for v in data.itervalues():
             if 'amount' not in v:
@@ -65,11 +65,11 @@ class ClientTest(unittest.TestCase):
             v['time'] = r['time']
             v['timestamp'] = r['timestamp']
 
-        ret = self.client.put_reports(data)
+        ret = self.client.put_ticks(data)
         self.assertEqual(ret, 'OK')
 
-    def test_put_empty_reports(self):
-        ret = self.client.put_reports({})
+    def test_put_empty_ticks(self):
+        ret = self.client.put_ticks({})
         self.assertEqual(ret, 'OK')
 
     def test_get_list(self):
@@ -77,13 +77,13 @@ class ClientTest(unittest.TestCase):
         self.assertTrue(isinstance(stocks, dict))
         self.assertTrue('SH000001' in stocks)
 
-    def test_get_report(self):
-        quote = self.client.get_report('SH000001')
+    def test_get_tick(self):
+        quote = self.client.get_tick('SH000001')
         self.assertTrue(isinstance(quote, dict))
         self.assertTrue(isinstance(quote['price'], float))
 
-    def test_get_reports(self):
-        stocks = self.client.get_reports('SH000001', 'KeyError')
+    def test_get_ticks(self):
+        stocks = self.client.get_ticks('SH000001', 'KeyError')
         self.assertTrue(isinstance(stocks, dict))
         self.assertTrue('SH000001' in stocks)
         self.assertFalse('KeyError' in stocks)

@@ -38,7 +38,7 @@ class ImiguApplication(Application):
 
         # last quote time reset to SH000001's timestamp
         try:
-            r = self.dbm.get_report("SH000001")
+            r = self.dbm.get_tick("SH000001")
             self.dbm.set_mtime(r['timestamp'])
         except KeyError:
             self.dbm.set_mtime(time.time())
@@ -149,26 +149,26 @@ class ImiguHandler(Handler):
     ###### periodic jobs ######
     
     def archive_day(self, *args):
-        """Archive daily data from report datastore.
+        """Archive daily data from tick datastore.
         """
         dt = datetime.datetime.fromtimestamp(self.dbm.mtime).date()
 
         store = self.dbm.daystore
-        reports = self.dbm.get_reports()
-        for symbol, report in reports:
-            if 'timestamp' not in report:
+        ticks = self.dbm.get_ticks()
+        for symbol, tick in ticks:
+            if 'timestamp' not in tick:
                 continue
 
-            d = datetime.datetime.fromtimestamp(report['timestamp'])
+            d = datetime.datetime.fromtimestamp(tick['timestamp'])
 
             if dt != d.date():
-                # skip instruments which no recent report data
+                # skip instruments which no recent tick data
                 continue
             
             t = int(time.mktime(d.date().timetuple()))
 
-            row = (t, report['open'], report['high'], report['low'],
-                   report['close'], report['volume'], report['amount'])
+            row = (t, tick['open'], tick['high'], tick['low'],
+                   tick['close'], tick['volume'], tick['amount'])
             
             data = np.array([row], dtype=store.DTYPE)
             store.update(symbol, data)
@@ -180,7 +180,7 @@ class ImiguHandler(Handler):
             self.request.write("+OK\r\n")
 
     def archive_minute(self, *args):
-        '''Archive minute data from report datastore.
+        '''Archive minute data from tick datastore.
         '''
         logging.info("starting archive minute...")
         self.application.archive_minute_time = time.time()
@@ -192,8 +192,8 @@ class ImiguHandler(Handler):
         close_time = dbm.exchange.close_time(now=dbm.mtime)
 
         try:
-            report = dbm.get_report('SH000001')
-            rts = report['timestamp']
+            tick = dbm.get_tick('SH000001')
+            rts = tick['timestamp']
         except KeyError:
             logging.error("No SH000001 data.")
             if not self.request.connection:
@@ -201,7 +201,7 @@ class ImiguHandler(Handler):
             return self.request.write("-ERR No data yet.\r\n")
 
         if rts < pre_open_time:
-            logging.error("wrong report time: %s." % \
+            logging.error("wrong tick time: %s." % \
                               (datetime.datetime.fromtimestamp(rts), ))
             if not self.request.connection:
                 return
@@ -219,7 +219,7 @@ class ImiguHandler(Handler):
         snapshot_time = mintime
         cleanup_callback = lambda r: r
         if index > 120 and index < 210:
-            # sometimes we received report within 11:31 - 12:59
+            # sometimes we received tick within 11:31 - 12:59
             # reset to 11:30
             snapshot_time = break_time
             def cleanup_callback(r):
@@ -230,7 +230,7 @@ class ImiguHandler(Handler):
         elif index >= 210 and index <= 330:
             index = index - 89  # subtract 11:31 - 12:59
         elif index > 330:
-            # sometimes we received report after 15:00
+            # sometimes we received tick after 15:00
             # reset to 15:00
             snapshot_time = close_time
             def cleanup_callback(r):
@@ -239,20 +239,20 @@ class ImiguHandler(Handler):
 
             index = 241
 
-        reports = dbm.get_reports()
-        for key, report in reports:
-            if 'timestamp' not in report:
+        ticks = dbm.get_ticks()
+        for key, tick in ticks:
+            if 'timestamp' not in tick:
                 # Wrong data
                 continue
 
-            if mintime - report['timestamp'] > 1800:
+            if mintime - tick['timestamp'] > 1800:
                 # no new data in 30 mins, something broken
                 # skip this symbol when unknown
                 continue
 
-            cleanup_callback(report)
+            cleanup_callback(tick)
             
-            mindata = (snapshot_time, report['price'], report['volume'], report['amount'])
+            mindata = (snapshot_time, tick['price'], tick['volume'], tick['amount'])
             y = np.array(mindata, dtype=store.DTYPE)
 
             store.set(key, index, y)
@@ -263,7 +263,7 @@ class ImiguHandler(Handler):
         self.request.write_ok()
 
     @classmethod
-    def get_snapshot_index(cls, open_time, report_time):
+    def get_snapshot_index(cls, open_time, tick_time):
         ts = time.time()
         d = datetime.datetime.fromtimestamp(ts)
         mintime = time.mktime((d.year, d.month, d.day,

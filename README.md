@@ -54,7 +54,7 @@ Install dependent packages with pip:
 
     from datafeed.client import Client
     c = Client()
-    c.get_report("SH000001")
+    c.get_tick("SH000001")
 
 
 ## TODO

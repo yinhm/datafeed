@@ -14,7 +14,7 @@ from datafeed.providers.http_fetcher import *
 from datafeed.utils import json_decode
 
 __all__ = ['GoogleSecurity', 'currency2float',
-           'GoogleReport', 'GoogleReportFetcher',
+           'GoogleTick', 'GoogleTickFetcher',
            'GoogleDay', 'GoogleDayFetcher',
            'GoogleNewsFetcher']
 
@@ -75,7 +75,7 @@ class GoogleSecurity(Security):
         return ex_cls()
         
 
-class GoogleReport(Report):
+class GoogleTick(Tick):
 
     # This only contains common tags.
     # You could retrieve special tag data from self._raw_data.
@@ -103,7 +103,7 @@ class GoogleReport(Report):
         security = GoogleSecurity.from_abbr(data.pop('abbr'),
                                             data.pop('symbol'))
 
-        super(GoogleReport, self).__init__(security, data)
+        super(GoogleTick, self).__init__(security, data)
 
     def assert_raw(self, raw_data):
         assert isinstance(raw_data['t'], basestring)
@@ -125,7 +125,7 @@ class GoogleReport(Report):
         # don't known why & escaped.
         data = rawdata.strip()[3:].replace('\\x', '')
         parsed = json_decode(data)
-        return (GoogleReport(x) for x in parsed)
+        return (GoogleTick(x) for x in parsed)
 
 
 class GoogleDay(Day):
@@ -160,7 +160,7 @@ class GoogleDay(Day):
         return (GoogleDay(security, line) for line in r)
 
 
-class GoogleReportFetcher(Fetcher):
+class GoogleTickFetcher(Fetcher):
 
     # Maximum number of stocks we'll batch fetch.
     _MAX_REQUEST_SIZE = 100
@@ -169,7 +169,7 @@ class GoogleReportFetcher(Fetcher):
                  time_out=20, max_clients=10, request_size=100):
         assert request_size <= self._MAX_REQUEST_SIZE
         
-        super(GoogleReportFetcher, self).__init__(base_url, time_out, max_clients)
+        super(GoogleTickFetcher, self).__init__(base_url, time_out, max_clients)
         self._request_size = request_size
 
     def _fetching_urls(self, *args, **kwargs):

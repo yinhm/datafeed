@@ -14,8 +14,8 @@ Supported commands
     auth
     get_mtime
     get_list
-    get_report
-    get_reports
+    get_tick
+    get_tickss
     get_minute
     get_1minute
     get_5minute
@@ -23,8 +23,8 @@ Supported commands
     get_dividend
     get_sector
     get_stats
-    get_report
-    put_reports
+    get_tick
+    put_ticks
     put_minute
     put_1minute
     put_5minute
@@ -313,8 +313,8 @@ class Handler(object):
                          'get_last_quote_time',
                          'get_mtime',
                          'get_list',
-                         'get_report',
-                         'get_reports',
+                         'get_tick',
+                         'get_ticks',
                          'get_minute',
                          'get_1minute',
                          'get_5minute',
@@ -322,8 +322,8 @@ class Handler(object):
                          'get_dividend',
                          'get_sector',
                          'get_stats',
-                         'get_report',
-                         'put_reports',
+                         'get_tick',
+                         'put_ticks',
                          'put_minute',
                          'put_1minute',
                          'put_5minute',
@@ -357,26 +357,26 @@ class Handler(object):
 
         if match != '':
             _re = re.compile('^(%s)' % match, re.I)
-            ret = dict([(r, v) for r, v in self.dbm.reportstore.iteritems() \
+            ret = dict([(r, v) for r, v in self.dbm.tickstore.iteritems() \
                             if _re.search(r)])
         else:
-            ret = self.dbm.reportstore.to_dict()
+            ret = self.dbm.tickstore.to_dict()
 
         return self._write_response(json_encode(ret))
 
-    def get_report(self, symbol, format):
+    def get_tick(self, symbol, format):
         try:
-            data = self.dbm.get_report(symbol)
+            data = self.dbm.get_tick(symbol)
             if format == 'json':
                 data = json_encode(data)
             self._write_response(data)
         except KeyError:
             self.request.write("-ERR Symbol %s not exists.\r\n" % symbol)
 
-    def get_reports(self, *args):
+    def get_ticks(self, *args):
         assert len(args) > 1
         format = args[-1]
-        data = self.dbm.get_reports(*args[:-1])
+        data = self.dbm.get_ticks(*args[:-1])
 
         if format == 'json':
             data = json_encode(data)
@@ -521,8 +521,8 @@ class Handler(object):
     def _write_response(self, ret):
         self.request.write("$%s\r\n%s\r\n" % (len(ret), ret))
         
-    def put_reports(self, data, format='zip'):
-        """Update reports from data.
+    def put_ticks(self, data, format='zip'):
+        """Update tickss from data.
 
         Data Format:
 
@@ -535,7 +535,7 @@ class Handler(object):
             assert isinstance(data, dict)
         except StandardError:
             return self.request.write("-ERR wrong data format\r\n")
-        self.dbm.update_reports(data)
+        self.dbm.update_ticks(data)
         self.request.write_ok()
         
     def put_minute(self, symbol, data, format='npy'):

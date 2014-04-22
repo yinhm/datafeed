@@ -3,7 +3,7 @@
 from datetime import datetime
 from datafeed.exchange import Security
 
-__all__ = ['Report', 'Day', 'Minute', 'SecurityList']
+__all__ = ['Tick', 'Day', 'Minute', 'SecurityList']
 
 
 class _Struct(object):
@@ -28,13 +28,13 @@ class _Struct(object):
     def todict(self):
         return self.__getstate__()
 
-class Report(_Struct):
+class Tick(_Struct):
 
     def __init__(self, security, adict):    
         assert isinstance(adict['price'], float)
         assert isinstance(adict['time'], datetime)
         
-        super(Report, self).__init__(security, adict)
+        super(Tick, self).__init__(security, adict)
 
     def __str__(self):
         return "%s, %s, %s" % (self.security, self.price, self.time)

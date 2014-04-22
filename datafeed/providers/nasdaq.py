@@ -28,7 +28,7 @@ class NasdaqSecurity(Security):
 
 class NasdaqList(SecurityList):
 
-    # Tags format defined by NasdaqReportFetcher which is:
+    # Tags format defined by NasdaqTickFetcher which is:
     # "sl1d1t1c1ohgv"
     # FIXME: Nasdaq quotes became N/A during session after hours.
     _DEFINITIONS = (

@@ -25,7 +25,7 @@ from datafeed.quote import *
 from datafeed.providers.http_fetcher import Fetcher
 from tornado.escape import json_decode
 
-__all__ = ['SinaSecurity', 'SinaReport', 'SinaReportFetcher']
+__all__ = ['SinaSecurity', 'SinaTick', 'SinaTickFetcher']
 
 # Sina finance 
 _EXCHANGES = {
@@ -60,7 +60,7 @@ class SinaSecurity(Security):
         return klass()
         
 
-class SinaReport(Report):
+class SinaTick(Tick):
 
     # Data example:
     # var hq_str_sh600028="中国石化,8.64,8.64,8.68,8.71,8.58,8.68,8.69,
@@ -112,24 +112,24 @@ class SinaReport(Report):
             data[key] = callback(raw_data[i])
             i += 1
         
-        super(SinaReport, self).__init__(security, data)
+        super(SinaTick, self).__init__(security, data)
 
     @staticmethod
     def parse(rawdata):
         from cStringIO import StringIO
         
         f = StringIO(rawdata)
-        return (SinaReport.parse_line(line) for line in f)
+        return (SinaTick.parse_line(line) for line in f)
 
     @staticmethod
     def parse_line(line):
         splited = line.split('"')
         idstr = splited[0].split('_').pop()[:-1]
         s = SinaSecurity.from_string(idstr)
-        return SinaReport(s, splited[1].split(','))
+        return SinaTick(s, splited[1].split(','))
 
 
-class SinaReportFetcher(Fetcher):
+class SinaTickFetcher(Fetcher):
 
     # Maximum number of stocks we'll batch fetch.
     _MAX_REQUEST_SIZE = 100
@@ -138,7 +138,7 @@ class SinaReportFetcher(Fetcher):
                  time_out=20, max_clients=10, request_size=100):
         assert request_size <= self._MAX_REQUEST_SIZE
         
-        super(SinaReportFetcher, self).__init__(base_url, time_out, max_clients)
+        super(SinaTickFetcher, self).__init__(base_url, time_out, max_clients)
         self._request_size = request_size
 
     def _fetching_urls(self, *args, **kwargs):

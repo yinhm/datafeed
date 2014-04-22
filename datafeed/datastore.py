@@ -15,7 +15,7 @@ one HDF5 file.
 
 Another type is data that has high update frequency, are stored at DictStore:
 
- * Report: snapshot of current price
+ * Tick: snapshot of current price
  * MinuteSnapshotCache Minute: In session minute snapshots
 
 There are two other stores: Dividend, Sector, we storing them to DictStore for
@@ -47,7 +47,7 @@ from datafeed.utils import *
 
 
 __all__ = ['Manager', 'Minute', 'Day', 'OneMinute', 'FiveMinute',
-           'DictStore', 'DictStoreNamespace', 'Report', 'MinuteSnapshotCache']
+           'DictStore', 'DictStoreNamespace', 'Tick', 'MinuteSnapshotCache']
 
 def date2key(date):
     '''Return formatted key from date.'''
@@ -71,7 +71,7 @@ class Manager(object):
         self._dstore = DictStore.open(os.path.join(self.datadir, 'dstore.dump'))
 
         # Dict Store
-        self._reportstore = None
+        self._tickstore = None
         self._sectorstore = None
         self._divstore = None
         self._minutestore = None
@@ -95,24 +95,24 @@ class Manager(object):
         return self._divstore
 
     @property
-    def reportstore(self):
-        '''Get report instance or initialize if not present.
+    def tickstore(self):
+        '''Get tick instance or initialize if not present.
 
         :returns:
-            Report instance.
+            Tick instance.
         '''
-        if not self._reportstore:
-            logging.debug("Loading reports...")
-            self._reportstore = Report(self._dstore)
+        if not self._tickstore:
+            logging.debug("Loading ticks...")
+            self._tickstore = Tick(self._dstore)
 
-        return self._reportstore
+        return self._tickstore
 
     @property
     def sectorstore(self):
         '''Get sector instance or initialize if not present.
 
         :returns:
-            Report instance.
+            Tick instance.
         '''
         if not self._sectorstore:
             logging.debug("Loading sectors...")
@@ -219,37 +219,37 @@ class Manager(object):
 
     @property
     def mtime(self):
-        "Modify time, updated we report data received."
+        "Modify time, updated we tick data received."
         return self._mtime
 
     def set_mtime(self, ts):
         if ts > self.mtime:
             self._mtime = ts
     
-    def get_report(self, symbol):
-        """Get report by symbol."""
-        return self.reportstore[symbol]
+    def get_tick(self, symbol):
+        """Get tick by symbol."""
+        return self.tickstore[symbol]
         
-    def get_reports(self, *args):
-        """Get reports by symbols.
+    def get_ticks(self, *args):
+        """Get ticks by symbols.
 
         Return:
           dict iterator
         """
         if len(args) > 0:
-            store = self.reportstore
+            store = self.tickstore
             ret = dict([(symbol, store.get(symbol)) for symbol in args if store.has_key(symbol) ])
         else:
-            ret = self.reportstore.iteritems()
+            ret = self.tickstore.iteritems()
             
         return ret
 
-    def update_reports(self, data):
+    def update_ticks(self, data):
         if len(data) == 0:
             return
         time = data[data.keys()[0]]['timestamp']
         self.set_mtime(time)
-        self.reportstore.update(data)
+        self.tickstore.update(data)
 
     def update_minute(self, symbol, data):
         # determine datastore first
@@ -356,7 +356,7 @@ class DictStoreNamespace(object, UserDict.DictMixin):
         assert not self.store.closed
         return self.handle.__delitem__(key)
 
-class Report(DictStoreNamespace):
+class Tick(DictStoreNamespace):
     pass
 
 class Sector(DictStoreNamespace):

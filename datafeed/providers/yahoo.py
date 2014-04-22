@@ -28,7 +28,7 @@ from datafeed.providers.http_fetcher import *
 from datafeed.utils import json_decode
 
 __all__ = ['YahooSecurity',
-           'YahooReport', 'YahooReportFetcher',
+           'YahooTick', 'YahooTickFetcher',
            'YahooDay', 'YahooDayFetcher',
            'YahooNewsFetcher']
 
@@ -83,9 +83,9 @@ class YahooSecurity(Security):
         return ex_cls()
         
 
-class YahooReport(Report):
+class YahooTick(Tick):
 
-    # Tags format defined by YahooReportFetcher which is:
+    # Tags format defined by YahooTickFetcher which is:
     # "sl1d1t1c1ohgv"
     # FIXME: Yahoo quotes became N/A during session after hours.
     _DEFINITIONS = (
@@ -111,13 +111,13 @@ class YahooReport(Report):
             i += 1
 
         security = YahooSecurity.from_string(data.pop('symbol'))
-        super(YahooReport, self).__init__(security, data)
+        super(YahooTick, self).__init__(security, data)
 
     @staticmethod
     def parse(rawdata):        
         f = StringIO(rawdata)
         r = csv.reader(f)
-        return (YahooReport(line) for line in r)
+        return (YahooTick(line) for line in r)
 
 
 class YahooDay(Day):
@@ -150,7 +150,7 @@ class YahooDay(Day):
         return (YahooDay(security, line) for line in r)
 
 
-class YahooReportFetcher(Fetcher):
+class YahooTickFetcher(Fetcher):
 
     # Live quotes tags format,
     # consistent with downloads link on the web page.
@@ -163,7 +163,7 @@ class YahooReportFetcher(Fetcher):
                  time_out=20, max_clients=10, request_size=100):
         assert request_size <= self._MAX_REQUEST_SIZE
         
-        super(YahooReportFetcher, self).__init__(base_url, time_out, max_clients)
+        super(YahooTickFetcher, self).__init__(base_url, time_out, max_clients)
         self._request_size = request_size
 
     def _fetching_urls(self, *args, **kwargs):

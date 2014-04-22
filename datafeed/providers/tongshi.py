@@ -49,7 +49,7 @@ from datafeed.client import Client
 
 RCV_WORK_SENDMSG = 4
 
-RCV_REPORT = 0x3f001234
+RCV_TICK = 0x3f001234
 RCV_FILEDATA = 0x3f001235
 
 STKLABEL_LEN = 10  # 股号数据长度,国内市场股号编码兼容钱龙
@@ -87,8 +87,8 @@ def format_market(value):
         raise Exception('Unknown market.')
 
 
-class Report(Structure):
-    '''tagRCV_REPORT_STRUCTExV3 data structure
+class Tick(Structure):
+    '''tagRCV_TICK_STRUCTExV3 data structure
     '''
     _pack_ = 1
     _fields_ = [('m_cbSize', WORD),
@@ -126,7 +126,7 @@ class Report(Structure):
         return format_market(self.m_wMarket) + self.m_szLabel
 
     def is_valid(self):
-        """Is this report data valid?
+        """Is this tick data valid?
 
         We seems get data full of zero if stock got suspended.
         Use this method to detect is the data valid so you can filter it.
@@ -262,7 +262,7 @@ class FileHead(Structure):
 
 
 class ReceiveDataUnion(Union):
-    _fields_ = [('m_pReportV3', Report),
+    _fields_ = [('m_pTickV3', Tick),
                 ('m_pDay', HistoryUnion),
                 ('m_pMinute', MinuteUnion),
                 ('m_pPower', Dividend),
@@ -330,7 +330,7 @@ class MainWindow(object):
     def _on_time(self):
         d = datetime.today()
         if d.hour == 15 and d.minute == 3:
-            # make sure we are not receiving reporting data after market closed.
+            # make sure we are not receiving ticking data after market closed.
             print("Market closed, exit on %d:%d." % (d.hour, d.minute))
             win32gui.PostMessage(self.hwnd, win32con.WM_COMMAND, 1025, 0)
 
@@ -388,16 +388,16 @@ class MainWindow(object):
     def _on_data_receive(self, hwnd, msg, wparam, lparam):
         header = ReceiveData.from_address(lparam)
 
-        if wparam == RCV_REPORT:
-            # Report
+        if wparam == RCV_TICK:
+            # Tick
             records = {}
             for i in xrange(header.m_nPacketNum):
-                r = Report.from_address(header.ptr + sizeof(Report) * i)
+                r = Tick.from_address(header.ptr + sizeof(Tick) * i)
                 if r.is_valid():
                     records[r.symbol] = r.to_dict()
 
-            self.client.put_reports(records)
-            print "%d report data sended" % header.m_nPacketNum
+            self.client.put_ticks(records)
+            print "%d tick data sended" % header.m_nPacketNum
         elif wparam == RCV_FILEDATA:
             if header.m_wDataType in (FILE_HISTORY_EX, FILE_5MINUTE_EX, FILE_1MINUTE_EX):
                 # Daily history

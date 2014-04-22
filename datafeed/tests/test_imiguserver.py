@@ -24,7 +24,7 @@ class ImiguApplicationTest(unittest.TestCase):
         key = helper.sample_key()
         sample = helper.sample()
         sample[key]['timestamp'] = 1291167000
-        self.application.dbm.reportstore.update(sample)
+        self.application.dbm.tickstore.update(sample)
 
 
     @patch.object(time, 'time')
@@ -186,7 +186,7 @@ class ImiguApplicationTest(unittest.TestCase):
         import marshal
         data = zlib.compress(marshal.dumps(data))
         
-        request = Request(None, 'put_reports', data)
+        request = Request(None, 'put_ticks', data)
         self.application(request)
 
         request = Request(None, 'archive_day')
@@ -197,7 +197,7 @@ class ImiguApplicationTest(unittest.TestCase):
         self.assertTrue((y[0]['open'] - 2868.73) < 0.1 ** 6)
 
     @patch.object(ImiguHandler, 'get_snapshot_index')
-    def test_fix_report_when_archive(self, mock_index):
+    def test_fix_tick_when_archive(self, mock_index):
         # set to after hours: 15:30 implicates error data
         # some datafeed still sending data even market was closed.
         day = datetime.datetime.today()
@@ -230,7 +230,7 @@ class ImiguApplicationTest(unittest.TestCase):
         import marshal
         data = zlib.compress(marshal.dumps(data))
         
-        request = Request(None, 'put_reports', data)
+        request = Request(None, 'put_ticks', data)
         self.application(request)
 
         close_time = time.mktime((day.year, day.month, day.day,
@@ -239,7 +239,7 @@ class ImiguApplicationTest(unittest.TestCase):
         request = Request(None, 'archive_minute', data)
         self.application(request)
         
-        r = self.application.dbm.get_report('SH000001')
+        r = self.application.dbm.get_tick('SH000001')
         self.assertEqual(r['timestamp'], close_time)
         self.assertEqual(r['open'], 2868.73)
 
@@ -275,7 +275,7 @@ class ImiguApplicationTest(unittest.TestCase):
         import marshal
         data = zlib.compress(marshal.dumps(data))
         
-        request = Request(None, 'put_reports', data)
+        request = Request(None, 'put_ticks', data)
         self.application(request)
 
         self.assertEqual(self.application.dbm.mtime, t1)
@@ -303,9 +303,9 @@ class ImiguApplicationTest(unittest.TestCase):
     @patch.object(time, 'time')
     def test_get_snapshot_index(self, mock_time):
         mock_time.return_value = 1309829400
-        report_time = 1309829160
+        tick_time = 1309829160
 
-        mintime, index = ImiguHandler.get_snapshot_index(1309829400, report_time)
+        mintime, index = ImiguHandler.get_snapshot_index(1309829400, tick_time)
 
         self.assertEqual(mintime, 1309829400)
         self.assertEqual(index, 0)

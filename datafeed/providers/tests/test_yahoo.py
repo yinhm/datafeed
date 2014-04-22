@@ -33,14 +33,14 @@ class YahooSecurityTest(unittest.TestCase):
         self.assertEqual(str(ret), '600028.SS')
     
 
-class YahooReportTest(unittest.TestCase):
+class YahooTickTest(unittest.TestCase):
     _RAW_DATA = '''"GOOG",533.89,"5/3/2011","4:00pm",-4.67,537.13,542.01,529.63,2081574
 "AAPL",348.20,"5/3/2011","4:00pm",+1.92,347.91,349.89,345.62,11198607
 "600028.SS",8.58,"5/4/2011","1:47am",-0.10,8.64,8.67,8.55,23045288'''
 
 
-    def test_yahoo_report(self):
-        ret = YahooReport.parse(self._RAW_DATA)
+    def test_yahoo_tick(self):
+        ret = YahooTick.parse(self._RAW_DATA)
         i = 0
         for r in ret:
             if i == 0:
@@ -88,30 +88,30 @@ class YahooDayTest(unittest.TestCase):
             i += 1
 
 
-class YahooReportFetcherTest(unittest.TestCase):
+class YahooTickFetcherTest(unittest.TestCase):
 
     def test_init(self):
-        f = YahooReportFetcher()
+        f = YahooTickFetcher()
         self.assertEqual(f._base_url, 'http://download.finance.yahoo.com/d/quotes.csv')
 
     def test_init_with_arguments(self):
-        f = YahooReportFetcher(time_out=10, request_size=50)
+        f = YahooTickFetcher(time_out=10, request_size=50)
         self.assertEqual(f._time_out, 10)
         self.assertEqual(f._request_size, 50)
         
     def test_init_with_wrong_arguments(self):
         self.assertRaises(AssertionError,
-                          YahooReportFetcher,
+                          YahooTickFetcher,
                           request_size=200)
         
     def test_fetch(self):
-        f = YahooReportFetcher(request_size=2)
+        f = YahooTickFetcher(request_size=2)
         s1 = YahooSecurity(YahooNA(), 'GOOG')
         s2 = YahooSecurity(YahooNA(), 'AAPL')
         s3 = YahooSecurity(SH(), '000001')
 
         def callback(body):
-            qs = YahooReport.parse(body)
+            qs = YahooTick.parse(body)
             for quote in qs:
                 if quote.security == s3:
                     # something must wrong if SSE Composite Index goes down to 100
@@ -130,7 +130,7 @@ class YahooDayFetcherTest(unittest.TestCase):
 
     def test_init_with_wrong_arguments(self):
         self.assertRaises(AssertionError,
-                          YahooReportFetcher,
+                          YahooTickFetcher,
                           max_clients=20)
         
     def test_fetch(self):

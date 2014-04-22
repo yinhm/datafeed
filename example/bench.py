@@ -52,17 +52,17 @@ d = {
         }
     }
 
-app.dbm.update_reports(d)
+app.dbm.update_ticks(d)
 
 path = os.path.dirname(os.path.realpath(__file__))
-f = open(path + '/../datafeed/tests/reports.dump', 'r')
+f = open(path + '/../datafeed/tests/ticks.dump', 'r')
 data = marshal.load(f)
 for v in data.itervalues():
     if 'amount' not in v:
         continue
     v['time'] = str(dt)
     v['timestamp'] = timestamp
-app.dbm.update_reports(data)
+app.dbm.update_ticks(data)
 
 request = Request(None, 'archive_minute')
 app(request)
