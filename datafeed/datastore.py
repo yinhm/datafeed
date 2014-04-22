@@ -226,11 +226,6 @@ class Manager(object):
         if ts > self.mtime:
             self._mtime = ts
     
-    @property
-    def last_quote_time(self):
-        logging.warning("Deprecated, using mtime instead.")
-        return self.mtime
-    
     def get_report(self, symbol):
         """Get report by symbol."""
         return self.reportstore[symbol]

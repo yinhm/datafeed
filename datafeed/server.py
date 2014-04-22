@@ -352,12 +352,6 @@ class Handler(object):
         """
         self.request.write(":%d\r\n" % self.dbm.mtime)
 
-    def get_last_quote_time(self, *args, **kwds):
-        """Return last quote timestamp.
-        """
-        logging.warning("Deprecated, using get_mtime instead.")
-        self.get_mtime()
-
     def get_list(self, match=None, format='json'):
         assert format == 'json'
 
