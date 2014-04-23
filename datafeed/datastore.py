@@ -433,11 +433,11 @@ class RockStore(object):
         return rocksdb.DB(path, opts)
 
     def get(self, key):
-        key = self.prefix + key
+        key = self.prefix + str(key)
         return self._rdb.get(key)
 
     def put(self, key, value):
-        key = self.prefix + key
+        key = self.prefix + str(key)
         self._rdb.put(key, value)
 
 class TickHistory(RockStore):

@@ -1,6 +1,7 @@
 from __future__ import with_statement
 
 import h5py
+import json
 import logging
 import os
 import gc
@@ -235,6 +236,41 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
     def test_init_store(self):
         self.tick.put(b"a", b"prefixed")
         self.assertEqual(b"prefixed", self.store.get(b"0001a"))
+
+    def test_ticks(self):
+        data = """{"BTC": {"sell": "3079.86", "buy": "3078.83", "last": "3079.86", "vol": 88219.1364, "timestamp": 1397805240, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3079.86", "buy": "3078.83", "last": "3079.86", "vol": 88219.1364, "timestamp": 1397805245, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3079.78", "buy": "3075.04", "last": "3079.8", "vol": 88219.3364, "timestamp": 1397805250, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076", "buy": "3075.21", "last": "3079.8", "vol": 88219.3364, "timestamp": 1397805270, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3075.98", "buy": "3075.22", "last": "3075.98", "vol": 88219.7918, "timestamp": 1397805275, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3075.99", "buy": "3075.23", "last": "3076", "vol": 88225.9708, "timestamp": 1397805280, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3077.8", "buy": "3076.08", "last": "3077.8", "vol": 88226.2321, "timestamp": 1397805285, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3077.8", "buy": "3076.09", "last": "3077.8", "vol": 88226.4575, "timestamp": 1397805290, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3077.78", "buy": "3076", "last": "3076", "vol": 88232.1352, "timestamp": 1397805295, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3077.78", "buy": "3076", "last": "3077.78", "vol": 88232.3352, "timestamp": 1397805305, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.9", "buy": "3075.18", "last": "3075.18", "vol": 88233.1607, "timestamp": 1397805310, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.9", "buy": "3075.18", "last": "3076.9", "vol": 88233.1862, "timestamp": 1397805315, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3077.16", "buy": "3076", "last": "3077.18", "vol": 88233.5862, "timestamp": 1397805320, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.89", "buy": "3075", "last": "3076.9", "vol": 88237.9071, "timestamp": 1397805325, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.87", "buy": "3075", "last": "3076.89", "vol": 88238.1071, "timestamp": 1397805330, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.83", "buy": "3075.01", "last": "3076.89", "vol": 88238.1071, "timestamp": 1397805335, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.83", "buy": "3075.01", "last": "3076.85", "vol": 88238.3071, "timestamp": 1397805340, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.79", "buy": "3075.01", "last": "3076.79", "vol": 88238.5325, "timestamp": 1397805350, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.7", "buy": "3075.01", "last": "3076.7", "vol": 88238.758, "timestamp": 1397805355, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.79", "buy": "3075.01", "last": "3076.79", "vol": 88239.9234, "timestamp": 1397805360, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.79", "buy": "3075.1", "last": "3076.79", "vol": 88239.9489, "timestamp": 1397805370, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.79", "buy": "3075.13", "last": "3076.79", "vol": 88239.9489, "timestamp": 1397805380, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.79", "buy": "3075.13", "last": "3076.79", "vol": 88239.9489, "timestamp": 1397805385, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.79", "buy": "3075.1", "last": "3075.1", "vol": 88243.9744, "timestamp": 1397805390, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.79", "buy": "3075.1", "last": "3075.1", "vol": 88243.9744, "timestamp": 1397805395, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.79", "buy": "3075.2", "last": "3076.79", "vol": 88243.9999, "timestamp": 1397805400, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3077.16", "buy": "3074.1", "last": "3074.1", "vol": 88274.5202, "timestamp": 1397805405, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.21", "buy": "3075.12", "last": "3076.21", "vol": 88274.5457, "timestamp": 1397805410, "high": "3135", "low": "3038"}}
+{"BTC": {"sell": "3076.21", "buy": "3075.18", "last": "3076.21", "vol": 88274.5912, "timestamp": 1397805425, "high": "3135", "low": "3038"}}"""
+
+        for tick in data.split('\n'):
+            t = json.loads(tick)
+            self.tick.put(t['BTC']['timestamp'], tick)
 
 class DayTest(unittest.TestCase):
 
