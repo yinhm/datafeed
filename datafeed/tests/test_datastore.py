@@ -12,6 +12,7 @@ from datetime import datetime
 
 from mock import Mock, patch
 
+from datafeed import datastore
 from datafeed.exchange import SH
 from datafeed.datastore import *
 from datafeed.tests import helper
@@ -97,6 +98,29 @@ class ManagerTest(unittest.TestCase):
         ret = self.manager.fiveminstore
         self.assertTrue(isinstance(ret, FiveMinute))
 
+    def test_tickstore(self):
+        ret = self.manager.tickstore
+        self.assertTrue(isinstance(ret, datastore.Tick))
+
+    def test_sectorstore(self):
+        ret = self.manager.sectorstore
+        self.assertTrue(isinstance(ret, datastore.Sector))
+
+    def test_dividendstore(self):
+        ret = self.manager.divstore
+        self.assertTrue(isinstance(ret, datastore.Dividend))
+
+    def test_tick_history(self):
+        ret = self.manager.tick
+        self.assertTrue(isinstance(ret, datastore.TickHistory))
+
+    def test_depth_history(self):
+        ret = self.manager.depth
+        self.assertTrue(isinstance(ret, datastore.DepthHistory))
+
+    def test_trade_history(self):
+        ret = self.manager.trade
+        self.assertTrue(isinstance(ret, datastore.TradeHistory))
 
 class DictStoreTest(unittest.TestCase):
 

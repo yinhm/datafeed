@@ -35,6 +35,7 @@ import h5py
 import logging
 import marshal
 import os
+import rocksdb
 import time
 
 import UserDict
@@ -69,6 +70,7 @@ class Manager(object):
         logging.debug("Loading h5file and memory store...")
         self._store = h5py.File(os.path.join(self.datadir, 'data.h5'))
         self._dstore = DictStore.open(os.path.join(self.datadir, 'dstore.dump'))
+        self._rstore = DictStore.open(os.path.join(self.datadir, 'dstore.dump'))
 
         # Dict Store
         self._tickstore = None
@@ -80,6 +82,14 @@ class Manager(object):
         self._daystore = None
         self._1minstore = None
         self._5minstore = None
+
+        # tick default to tick history, find another name for tickstore or
+        # merge tickstore to TickHistory?
+        # TODO: move sectorstore to rstore
+        # TODO: move divstore to rstore
+        self.tick = TickHistory(self._rstore)
+        self.depth = DepthHistory(self._rstore)
+        self.trade = TradeHistory(self._rstore)
 
         self._mtime = None
 
@@ -303,7 +313,6 @@ class DictStore(dict):
     def flush(self):
         pickle.dump(self.items(), open(self.filename, 'wb+'), -1)
 
-
 class DictStoreNamespace(object, UserDict.DictMixin):
     def __init__(self, store):
         self.store = store
@@ -364,6 +373,62 @@ class Sector(DictStoreNamespace):
 
 class Dividend(DictStoreNamespace):
     pass
+
+
+
+class RockStaticPrefix(rocksdb.interfaces.SliceTransform):
+    """prefix extractor of a static size. Always the first 4 bytes are used as the prefix.
+    see: http://pyrocksdb.readthedocs.org/en/v0.1/tutorial/index.html
+    """
+    def name(self):
+        return b'static'
+
+    def transform(self, src):
+        return (0, 4)
+
+    def in_domain(self, src):
+        return len(src) >= 4
+
+    def in_range(self, dst):
+        return len(dst) == 4
+
+
+class RockStore(object):
+
+    def __init__(self, rdb):
+        assert self.prefix and len(self.prefix) == 4
+        klass = self.__class__.__name__
+        if klass == 'RockStore':
+            raise StandardError("Can not initialize directly.")
+        self._rdb = rdb
+
+    @classmethod
+    def open(cls, path):
+        opts = rocksdb.Options()
+        opts.prefix_extractor = RockStaticPrefix()
+        opts.create_if_missing = True
+        opts.write_buffer_size = 16 * (1024 ** 2) # 16MB
+        opts.target_file_size_base = 16 * (1024 ** 2) # 16MB
+        opts.filter_policy = rocksdb.BloomFilterPolicy(10)
+        opts.block_cache = rocksdb.LRUCache(256 * (1024 ** 2)) # 256MB
+        opts.block_cache_compressed = rocksdb.LRUCache(64 * (1024 ** 2)) # 64MB
+
+        return rocksdb.DB("rdb", opts)
+
+
+class TickHistory(RockStore):
+
+    prefix = '0001'
+
+
+class DepthHistory(RockStore):
+
+    prefix = '0002'
+
+
+class TradeHistory(RockStore):
+
+    prefix = '0003'
 
 
 class OHLC(object):
