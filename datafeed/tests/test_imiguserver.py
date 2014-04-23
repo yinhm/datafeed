@@ -1,7 +1,10 @@
 from __future__ import with_statement
 
 import datetime
+import gc
 import re
+import os
+import shutil
 import time
 import unittest
 
@@ -16,7 +19,10 @@ from mock import Mock, patch
 class ImiguApplicationTest(unittest.TestCase):
 
     def setUp(self):
-        self.application = ImiguApplication(helper.datadir, SH())
+        self.datadir = '/tmp/datafeed-%d' % int(time.time() * 1000 * 1000)
+        os.mkdir(self.datadir)
+
+        self.application = ImiguApplication(self.datadir, SH())
         self.application.dbm._mtime = 1291167000
         self.open_time = 1291167000
         self.close_time = 1291186800
@@ -26,6 +32,8 @@ class ImiguApplicationTest(unittest.TestCase):
         sample[key]['timestamp'] = 1291167000
         self.application.dbm.tickstore.update(sample)
 
+    def tearDown(self):
+        shutil.rmtree(self.datadir, ignore_errors=True)
 
     @patch.object(time, 'time')
     def test_archive_day_09_29(self, mock_time):

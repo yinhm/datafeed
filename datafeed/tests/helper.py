@@ -3,7 +3,7 @@ import numpy
 import os
 import time
 
-datadir ='/tmp/datafeed-%d' % int(time.time())
+datadir = '/tmp/datafeed-%d' % int(time.time() * 1000)
 os.mkdir(datadir)
 
 def sample_key():

@@ -26,12 +26,7 @@ class TestHelper(object):
         shutil.rmtree(rpath, ignore_errors=True)
 
     def _close(self):
-        del(self.manager.tick)
-        del(self.manager.depth)
-        del(self.manager.trade)
-        del(self.manager._rstore)
-        del(self.manager)
-        gc.collect()
+        self.manager.clean()
 
 
 class ManagerTest(unittest.TestCase, TestHelper):

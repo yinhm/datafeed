@@ -32,6 +32,7 @@ you could distinguish them by prefix.
 import atexit
 import datetime
 import h5py
+import gc
 import logging
 import marshal
 import os
@@ -286,6 +287,13 @@ class Manager(object):
         logging.debug("datastore shutdown, saving data.")
         self._dstore.close()
 
+    def clean(self):
+        del(self.tick)
+        del(self.depth)
+        del(self.trade)
+        del(self._rstore)
+        gc.collect()
+
 
 class DictStore(dict):
 
@@ -307,7 +315,13 @@ class DictStore(dict):
         return cls(filename, data)
 
     def close(self):
-        self.flush()
+        try:
+            self.flush()
+        except IOError:
+            # when we doing unittests, datadir may already cleaned.
+            logging.error("IOError, Could not wrote to disk.")
+            pass
+
         self.closed = True
 
     def flush(self):
