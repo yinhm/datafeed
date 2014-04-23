@@ -70,7 +70,7 @@ class Manager(object):
         logging.debug("Loading h5file and memory store...")
         self._store = h5py.File(os.path.join(self.datadir, 'data.h5'))
         self._dstore = DictStore.open(os.path.join(self.datadir, 'dstore.dump'))
-        self._rstore = DictStore.open(os.path.join(self.datadir, 'dstore.dump'))
+        self._rstore = RockStore.open(os.path.join(self.datadir, 'rdb'))
 
         # Dict Store
         self._tickstore = None
@@ -413,7 +413,7 @@ class RockStore(object):
         opts.block_cache = rocksdb.LRUCache(256 * (1024 ** 2)) # 256MB
         opts.block_cache_compressed = rocksdb.LRUCache(64 * (1024 ** 2)) # 64MB
 
-        return rocksdb.DB("rdb", opts)
+        return rocksdb.DB(path, opts)
 
 
 class TickHistory(RockStore):

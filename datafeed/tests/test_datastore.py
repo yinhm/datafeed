@@ -1,8 +1,11 @@
 from __future__ import with_statement
 
 import h5py
+import logging
 import os
+import gc
 import re
+import shutil
 import time
 import unittest
 
@@ -17,11 +20,28 @@ from datafeed.exchange import SH
 from datafeed.datastore import *
 from datafeed.tests import helper
 
+class TestHelper(object):
+    def _clean(self):
+        rpath = os.path.join(helper.datadir, 'rdb')
+        shutil.rmtree(rpath, ignore_errors=True)
 
-class ManagerTest(unittest.TestCase):
+    def _close(self):
+        del(self.manager.tick)
+        del(self.manager.depth)
+        del(self.manager.trade)
+        del(self.manager._rstore)
+        del(self.manager)
+        gc.collect()
+
+
+class ManagerTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
+        self._clean()
         self.manager = Manager(helper.datadir, SH())
+
+    def tearDown(self):
+        self._close()
 
     def test_store_filename(self):
         ret = self.manager._store
