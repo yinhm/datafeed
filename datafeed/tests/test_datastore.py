@@ -225,9 +225,16 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
         gc.collect()
         self._clean()
 
-    def test_init_store(self):
-        self.assertEqual(self.tick.prefix, '0001')
+    def test_get_none(self):
+        self.assertIsNone(self.tick.get('xxx'))
 
+    def test_put_get(self):
+        self.tick.put(b"a", b"b")
+        self.assertEqual(b"b", self.tick.get(b"a"))
+
+    def test_init_store(self):
+        self.tick.put(b"a", b"prefixed")
+        self.assertEqual(b"prefixed", self.store.get(b"0001a"))
 
 class DayTest(unittest.TestCase):
 

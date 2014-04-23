@@ -411,10 +411,13 @@ class RockStore(object):
 
     def __init__(self, rdb):
         assert self.prefix and len(self.prefix) == 4
-        klass = self.__class__.__name__
-        if klass == 'RockStore':
+        if self.klass == 'RockStore':
             raise StandardError("Can not initialize directly.")
         self._rdb = rdb
+
+    @property
+    def klass(self):
+        return self.__class__.__name__
 
     @classmethod
     def open(cls, path):
@@ -429,6 +432,13 @@ class RockStore(object):
 
         return rocksdb.DB(path, opts)
 
+    def get(self, key):
+        key = self.prefix + key
+        return self._rdb.get(key)
+
+    def put(self, key, value):
+        key = self.prefix + key
+        self._rdb.put(key, value)
 
 class TickHistory(RockStore):
 
