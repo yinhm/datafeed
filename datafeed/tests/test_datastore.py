@@ -21,26 +21,30 @@ from datafeed.datastore import *
 from datafeed.tests import helper
 
 class TestHelper(object):
+
+    def _setup(self):
+        self.datadir = '/tmp/datafeed-%d' % int(time.time() * 1000 * 1000)
+        os.mkdir(self.datadir)
+
     def _clean(self):
-        rpath = os.path.join(helper.datadir, 'rdb')
-        shutil.rmtree(rpath, ignore_errors=True)
-
-    def _close(self):
-        self.manager.clean()
+        shutil.rmtree(self.datadir, ignore_errors=True)
 
 
-class ManagerTest(unittest.TestCase, TestHelper):
+class ManagerTest(unittest.TestCase):
 
     def setUp(self):
-        self._clean()
-        self.manager = Manager(helper.datadir, SH())
+        self.datadir = '/tmp/datafeed-%d' % int(time.time())
+        os.mkdir(self.datadir)
+
+        self.manager = Manager(self.datadir, SH())
 
     def tearDown(self):
-        self._close()
+        self.manager.clean()
+        shutil.rmtree(self.datadir, ignore_errors=True)
 
     def test_store_filename(self):
         ret = self.manager._store
-        self.assertEqual(ret.filename, '%s/data.h5' % helper.datadir)
+        self.assertEqual(ret.filename, '%s/data.h5' % self.datadir)
         self.assertTrue(isinstance(ret, h5py.File))
 
     def test_daystore(self):
@@ -180,10 +184,16 @@ class DictStoreNamespaceTest(unittest.TestCase):
         self.assertEqual(self.impl.get('k12'), 'v21')
 
 
-class TickTest(unittest.TestCase):
+class TickTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self._setup()
+
+    def tearDown(self):
+        self._clean()
 
     def test_init_store(self):
-        filename = '%s/dstore.dump' % helper.datadir
+        filename = '%s/dstore.dump' % self.datadir
         store = DictStore.open(filename)
         rstore = Tick(store)
         sample = helper.sample()
@@ -199,6 +209,24 @@ class TickTest(unittest.TestCase):
         store = DictStore.open(filename)
         rstore = Tick(store)
         self.assertEqual(rstore[key], sample[key])
+
+
+class TickHistoryTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self._setup()
+
+        self.store = datastore.RockStore.open(self.datadir)
+        self.tick = datastore.TickHistory(self.store)
+
+    def tearDown(self):
+        del(self.tick)
+        del(self.store)
+        gc.collect()
+        self._clean()
+
+    def test_init_store(self):
+        self.assertEqual(self.tick.prefix, '0001')
 
 
 class DayTest(unittest.TestCase):
@@ -396,13 +424,18 @@ class FiveMinuteTest(unittest.TestCase):
         np.testing.assert_array_equal(y2[43], data[172])
 
 
-class MinuteSnapshotCacheTest(unittest.TestCase):
+class MinuteSnapshotCacheTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
-        self.filename = '%s/dstore_mincache.dump' % helper.datadir
+        self._setup()
+
+        self.filename = '%s/dstore_mincache.dump' % self.datadir
         self.date = datetime.today().date()
         self.store = DictStore.open(self.filename)
         self.mstore = MinuteSnapshotCache(self.store, self.date)
+
+    def tearDown(self):
+        self._clean()
 
     def test_inited_date(self):
         self.assertEqual(self.mstore.date, datetime.today().date())
@@ -443,7 +476,7 @@ class MinuteSnapshotCacheTest(unittest.TestCase):
         symbol = 'TS123456'
         self.mstore[symbol] = x
 
-        dbm = Manager(helper.datadir, SH())
+        dbm = Manager(self.datadir, SH())
         tostore = dbm._minutestore_at(self.date, memory=False)
 
         # rewrite
@@ -465,5 +498,3 @@ class MinuteSnapshotCacheTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    import shutil
-    shutil.rmtree(helper.datadir)
