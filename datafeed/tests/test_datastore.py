@@ -551,11 +551,11 @@ class TestRockStaticPrefix(unittest.TestCase, TestHelper):
         self._clean()
 
     def test_prefix(self):
-        prefix = transform.int2bytes(2, 2)
+        prefix = transform.int2bytes(2, 3)
         for x in range(3000):
-            keyx = transform.int2bytes(x, 2) + b'.x'
-            keyy = transform.int2bytes(x, 2) + b'.y'
-            keyz = transform.int2bytes(x, 2) + b'.z'
+            keyx = transform.int2bytes(x, 3) + b'.x'
+            keyy = transform.int2bytes(x, 3) + b'.y'
+            keyz = transform.int2bytes(x, 3) + b'.z'
             self.db.put(keyx, b'x')
             self.db.put(keyy, b'y')
             self.db.put(keyz, b'z')
