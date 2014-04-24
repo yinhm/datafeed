@@ -37,6 +37,7 @@ import logging
 import marshal
 import os
 import rocksdb
+import simpleflake
 import time
 
 import UserDict
@@ -45,6 +46,7 @@ import cPickle as pickle
 import numpy as np
 
 
+from datafeed import transform
 from datafeed.utils import *
 
 
@@ -398,19 +400,19 @@ class RockStaticPrefix(rocksdb.interfaces.SliceTransform):
         return b'static'
 
     def transform(self, src):
-        return (0, 4)
+        return (0, 2)
 
     def in_domain(self, src):
-        return len(src) >= 4
+        return len(src) >= 2
 
     def in_range(self, dst):
-        return len(dst) == 4
+        return len(dst) == 2
 
 
 class RockStore(object):
 
     def __init__(self, rdb):
-        assert self.prefix and len(self.prefix) == 4
+        assert self.prefix and len(self.prefix) == 2
         if self.klass == 'RockStore':
             raise StandardError("Can not initialize directly.")
         self._rdb = rdb
@@ -432,27 +434,35 @@ class RockStore(object):
 
         return rocksdb.DB(path, opts)
 
-    def get(self, key):
-        key = self.prefix + str(key)
+    def put(self, timestamp, value):
+        """
+        timestamp: ms, 1/1,000
+        """
+        flakeid = simpleflake.simpleflake(timestamp) # 64bits
+        key = self.prefix + transform.int2bytes(flakeid, 8)
+        self._rdb.put(key, value)
+        return key
+
+    def _get(self, key):
         return self._rdb.get(key)
 
-    def put(self, key, value):
-        key = self.prefix + str(key)
+    def _put(self, key, value):
         self._rdb.put(key, value)
+
 
 class TickHistory(RockStore):
 
-    prefix = '0001'
+    prefix = transform.int2bytes(1, fill_size=2)
 
 
 class DepthHistory(RockStore):
 
-    prefix = '0002'
+    prefix = transform.int2bytes(2, fill_size=2)
 
 
 class TradeHistory(RockStore):
 
-    prefix = '0003'
+    prefix = transform.int2bytes(3, fill_size=2)
 
 
 class OHLC(object):
@@ -956,3 +966,4 @@ class MinuteSnapshotCache(DictStoreNamespace):
                     logging.error("Inconsistent data for %s, ignoring." % key)
                 self.__delitem__(key)
             tostore.flush()
+

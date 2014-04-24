@@ -17,6 +17,7 @@ from datetime import datetime
 from mock import Mock, patch
 
 from datafeed import datastore
+from datafeed import transform
 from datafeed.exchange import SH
 from datafeed.datastore import *
 from datafeed.tests import helper
@@ -227,15 +228,16 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
         self._clean()
 
     def test_get_none(self):
-        self.assertIsNone(self.tick.get('xxx'))
+        self.assertIsNone(self.tick._get('xxx'))
 
     def test_put_get(self):
-        self.tick.put(b"a", b"b")
-        self.assertEqual(b"b", self.tick.get(b"a"))
+        self.tick._put(b"a", b"b")
+        self.assertEqual(b"b", self.tick._get(b"a"))
 
     def test_init_store(self):
-        self.tick.put(b"a", b"prefixed")
-        self.assertEqual(b"prefixed", self.store.get(b"0001a"))
+        ts = int(time.time())
+        key = self.tick.put(ts, b"v")
+        self.assertEqual(b"v", self.store.get(key))
 
     def test_ticks(self):
         data = """{"BTC": {"sell": "3079.86", "buy": "3078.83", "last": "3079.86", "vol": 88219.1364, "timestamp": 1397805240, "high": "3135", "low": "3038"}}
@@ -537,6 +539,36 @@ class MinuteSnapshotCacheTest(unittest.TestCase, TestHelper):
 
         # testing reopen data
         self.assertRaises(KeyError, mstore.get, symbol)
+
+
+class TestRockStaticPrefix(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self._setup()
+        self.db = datastore.RockStore.open(self.datadir)
+
+    def tearDown(self):
+        self._clean()
+
+    def test_prefix(self):
+        prefix = transform.int2bytes(2, 2)
+        for x in range(3000):
+            keyx = transform.int2bytes(x, 2) + b'.x'
+            keyy = transform.int2bytes(x, 2) + b'.y'
+            keyz = transform.int2bytes(x, 2) + b'.z'
+            self.db.put(keyx, b'x')
+            self.db.put(keyy, b'y')
+            self.db.put(keyz, b'z')
+
+        self.assertEqual(b'x', self.db.get(prefix + b'.x'))
+        self.assertEqual(b'y', self.db.get(prefix + b'.y'))
+        self.assertEqual(b'z', self.db.get(prefix + b'.z'))
+
+        it = self.db.iterkeys(prefix=prefix)
+        it.seek(prefix)
+
+        ref = [prefix + b'.x', prefix + b'.y', prefix + b'.z']
+        self.assertEqual(ref, list(it))
 
 
 if __name__ == '__main__':
