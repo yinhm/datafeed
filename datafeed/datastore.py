@@ -412,7 +412,7 @@ class RockStaticPrefix(rocksdb.interfaces.SliceTransform):
 class RockStore(object):
 
     def __init__(self, rdb):
-        assert self.prefix and len(self.prefix) == 2
+        assert self.BASE_PREFIX and len(self.BASE_PREFIX) == 2
         if self.klass == 'RockStore':
             raise StandardError("Can not initialize directly.")
         self._rdb = rdb
@@ -434,12 +434,25 @@ class RockStore(object):
 
         return rocksdb.DB(path, opts)
 
-    def put(self, timestamp, value):
+    def query(self, timestamp):
+        """Query rocksdb store with prefix"""
+        prefix = self.prefix(timestamp)
+        iter = self._rdb.iterkeys(prefix=prefix)
+        iter.seek(prefix)
+        return iter
+
+    def prefix(self, timestamp):
+        second_time = timestamp - simpleflake.SIMPLEFLAKE_EPOCH
+        millisecond_time = int(second_time * 1000)
+        leading_flake = millisecond_time << simpleflake.SIMPLEFLAKE_TIMESTAMP_SHIFT
+        return self.BASE_PREFIX + transform.int2bytes(leading_flake, 8)[:1]
+
+    def put(self, symbol, timestamp, value):
         """
         timestamp: ms, 1/1,000
         """
         flakeid = simpleflake.simpleflake(timestamp) # 64bits
-        key = self.prefix + transform.int2bytes(flakeid, 8)
+        key = self.BASE_PREFIX + transform.int2bytes(flakeid, 8) + transform.b(symbol)
         self._rdb.put(key, value)
         return key
 
@@ -452,17 +465,16 @@ class RockStore(object):
 
 class TickHistory(RockStore):
 
-    prefix = transform.int2bytes(1, fill_size=2)
-
+    BASE_PREFIX = transform.int2bytes(1, fill_size=2)
 
 class DepthHistory(RockStore):
 
-    prefix = transform.int2bytes(2, fill_size=2)
+    BASE_PREFIX = transform.int2bytes(2, fill_size=2)
 
 
 class TradeHistory(RockStore):
 
-    prefix = transform.int2bytes(3, fill_size=2)
+    BASE_PREFIX = transform.int2bytes(3, fill_size=2)
 
 
 class OHLC(object):

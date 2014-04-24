@@ -236,8 +236,16 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
 
     def test_init_store(self):
         ts = int(time.time())
-        key = self.tick.put(ts, b"v")
+        key = self.tick.put('btc', ts, b"v")
         self.assertEqual(b"v", self.store.get(key))
+
+    def test_put_with_prefix_key(self):
+        ts = 1397805240
+        key = self.tick.put('btc', ts, b"v2")
+        self.assertTrue(key.startswith('\x00\x014'))
+
+    def test_prefix_key(self):
+        self.assertTrue(self.tick.prefix(1397805240), '\x00\x014')
 
     def test_ticks(self):
         data = """{"BTC": {"sell": "3079.86", "buy": "3078.83", "last": "3079.86", "vol": 88219.1364, "timestamp": 1397805240, "high": "3135", "low": "3038"}}
@@ -270,9 +278,18 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
 {"BTC": {"sell": "3076.21", "buy": "3075.12", "last": "3076.21", "vol": 88274.5457, "timestamp": 1397805410, "high": "3135", "low": "3038"}}
 {"BTC": {"sell": "3076.21", "buy": "3075.18", "last": "3076.21", "vol": 88274.5912, "timestamp": 1397805425, "high": "3135", "low": "3038"}}"""
 
+        keys = []
         for tick in data.split('\n'):
             t = json.loads(tick)
-            self.tick.put(t['BTC']['timestamp'], tick)
+            key = self.tick.put('btc', t['BTC']['timestamp'], tick)
+            keys.append(key)
+
+        iter = self.tick.query(1397805240)
+        results = list(iter)
+        self.assertTrue(keys[0] in results)
+        self.assertTrue(keys[-1] in results)
+        self.assertTrue(len(results), len(keys))
+
 
 class DayTest(unittest.TestCase):
 
