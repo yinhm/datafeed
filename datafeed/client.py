@@ -1,4 +1,5 @@
 import errno
+import json
 import marshal
 import socket
 import zlib
@@ -242,10 +243,10 @@ class Client(object):
         data = zlib.compress(marshal.dumps(adict))
         return self.execute_command('PUT_TICKS', data, 'zip')
 
-    def put_tick(self, symbol, adict):
+    def put_tick(self, symbol, timestamp, adict):
         assert isinstance(adict, dict)
-        data = zlib.compress(marshal.dumps(adict))
-        return self.execute_command('PUT_TICk', symbol, data, 'zip')
+        data = zlib.compress(json.dumps(adict))
+        return self.execute_command('PUT_TICk', symbol, str(timestamp), data, 'zip')
 
     def put_depth(self, symbol, adict):
         assert isinstance(adict, dict)

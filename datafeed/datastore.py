@@ -467,6 +467,9 @@ class RockStore(object):
         leading_flake = millisecond_time << simpleflake.SIMPLEFLAKE_TIMESTAMP_SHIFT
         return self.BASE_PREFIX + transform.int2bytes(leading_flake, 8)[:1]
 
+    def get(self, key):
+        return self._get(key)
+
     def put(self, symbol, timestamp, value):
         """
         timestamp: ms, 1/1,000

@@ -86,6 +86,7 @@ For more details: http://redis.io/topics/protocol
 import datetime
 import errno
 import functools
+import json
 import logging
 import marshal
 import os
@@ -317,21 +318,20 @@ class Application(object):
 def put_zipped(method):
     @functools.wraps(method)
     def wrapper(self, *args, **kwds):
-        assert len(args) == 3
+        assert len(args) == 4
         assert args[-1] == 'zip'
 
-        symbol, data, fmt = args
+        symbol, timestamp, data, fmt = args
 
         try:
-            data = marshal.loads(zlib.decompress(data))
-            assert isinstance(data, dict)
+            data = zlib.decompress(data)
         except StandardError:
             return self.request.write("-ERR wrong data format\r\n")
 
         dbname = method.__name__.split('_')[1]
         db = getattr(self.dbm, dbname)
         func = getattr(db, 'put')
-        func(symbol, data)
+        func(symbol, float(timestamp), data)
         return method(self, symbol, data)
     return wrapper
 
@@ -574,7 +574,9 @@ class Handler(object):
         
     @put_zipped
     def put_tick(self, symbol, data):
-        self.dbm.tickstore.update(data)
+        data = json.loads(data)
+        assert isinstance(data, dict)
+        self.dbm.tickstore.set(symbol, data)
         self.request.write_ok()
 
     @put_zipped
