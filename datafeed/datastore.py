@@ -69,6 +69,7 @@ class Manager(object):
     def __init__(self, datadir, exchange, enable_rdb=True):
         self.datadir = datadir
         self.exchange = exchange
+        self.enable_rdb = enable_rdb
 
         logging.debug("Loading h5file and memory store...")
         self._store = h5py.File(os.path.join(self.datadir, 'data.h5'))
@@ -265,6 +266,10 @@ class Manager(object):
         time = data[data.keys()[0]]['timestamp']
         self.set_mtime(time)
         self.tickstore.update(data)
+
+        if self.enable_rdb:
+            for k, v in data.iteritems():
+                self.tick.put(k, v['timestamp'], v)
 
     def update_minute(self, symbol, data):
         # determine datastore first
