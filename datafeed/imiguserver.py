@@ -27,14 +27,14 @@ class SnapshotIndexError(KeyError):
 
 class ImiguApplication(Application):
 
-    def __init__(self, datadir, exchange):
+    def __init__(self, datadir, exchange, **kwds):
         self.archive_minute_time = 0
         self.archive_day_time = 0
         self.crontab_time = 0
         
         self._tasks = []
         
-        super(ImiguApplication, self).__init__(datadir, exchange, handler=ImiguHandler)
+        super(ImiguApplication, self).__init__(datadir, exchange, handler=ImiguHandler, **kwds)
 
         # last quote time reset to SH000001's timestamp
         try:

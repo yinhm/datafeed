@@ -319,5 +319,17 @@ class ImiguApplicationTest(unittest.TestCase):
         self.assertEqual(index, 0)
 
 
+class ImiguApplicationNoRDBTest(unittest.TestCase):
+
+    def test_disable_rdb(self):
+        datadir = '/tmp/datafeed-%d' % int(time.time() * 1000 * 1000)
+        os.mkdir(datadir)
+
+        app = ImiguApplication(datadir, SH(), rdb=False)
+        self.assertEqual(app.dbm._rstore, None)
+
+        #app.dbm.tickstore.update(sample)
+
+
 if __name__ == '__main__':
     unittest.main()
