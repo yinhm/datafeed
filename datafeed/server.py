@@ -431,6 +431,10 @@ class Handler(object):
     def get_depth(self, symbol):
         return self.dbm.depth.get_current(symbol)
 
+    @get_jsoned
+    def get_trade(self, symbol):
+        return self.dbm.trade.get_current(symbol)
+
     def get_minute(self, symbol, timestamp, format='npy'):
         """Get daily minutes history.
 
@@ -599,7 +603,8 @@ class Handler(object):
         self.request.write_ok()
 
     @put_zipped
-    def put_trade(self, symbol, data, format='zip'):
+    def put_trade(self, symbol, rawdata):
+        self.dbm.trade.update_current(symbol, rawdata)
         self.request.write_ok()
 
     def put_minute(self, symbol, data, format='npy'):
