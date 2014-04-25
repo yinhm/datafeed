@@ -35,7 +35,7 @@ class HandlerTest(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.datadir, ignore_errors=True)
 
-    def test_put_tick(self):
+    def test_get_put_tick(self):
         symbol = helper.sample_key()
         sample = helper.sample()
         timestamp = time.time()
@@ -61,6 +61,27 @@ class HandlerTest(unittest.TestCase):
         rawdata = self.app.dbm.tick.get(key)
         actual = json.loads(rawdata)
         self.assertTrue(expected, actual)
+
+
+    def test_get_put_depth(self):
+        symbol = helper.sample_key()
+        timestamp = time.time()
+        depth = '{"bids": [[2767, 16.3121], ["2766.5", 0.004], ["2766.04", 0.01], [2766, 0.004], ["2765.85", 1], ["2765.5", 0.002], ["2765.44", 0.362], ["2765.04", 0.01], [2765, 10.003], ["2764.5", 0.001]], "asks": [["2871.21", 0.01], ["2870.62", 0.2652], [2870, 17.8974], [2869, 5.3053], ["2868.09", 0.01], [2868, 11.1509], ["2867.09", 0.01], [2867, 234.221], ["2866.09", 0.01], ["2866.03", 1]]}'
+
+        data = zlib.compress(json.dumps(depth))
+        request = MockRequest(None, 'put_depth', symbol, timestamp, data, 'zip')
+        self.app(request)
+        self.assertEqual('+OK\r\n', request.result)
+
+        request = MockRequest(None, 'get_depth', symbol, 'json')
+        self.app(request)
+
+        data = request.result.split('\r\n')[1]
+        result = json.loads(data)
+        self.assertTrue(depth, result)
+
+        actual = self.app.dbm.depth.get('cached_depth_SH000001')
+        self.assertTrue(depth, actual)
 
 
 if __name__ == '__main__':

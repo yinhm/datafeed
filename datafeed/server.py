@@ -336,6 +336,21 @@ def put_zipped(method):
     return wrapper
 
 
+def get_jsoned(method):
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwds):
+        assert len(args) == 2
+        assert args[-1] == 'json'
+
+        symbol, fmt = args
+
+        try:
+            data = json.dumps(method(self, symbol))
+            self._write_response(data)
+        except KeyError:
+            self.request.write("-ERR Symbol %s not exists.\r\n" % symbol)
+    return wrapper
+
 class Handler(object):
 
     SUPPORTED_METHODS = ('auth',
@@ -398,14 +413,9 @@ class Handler(object):
 
         return self._write_response(json_encode(ret))
 
-    def get_tick(self, symbol, format):
-        try:
-            data = self.dbm.get_tick(symbol)
-            if format == 'json':
-                data = json_encode(data)
-            self._write_response(data)
-        except KeyError:
-            self.request.write("-ERR Symbol %s not exists.\r\n" % symbol)
+    @get_jsoned
+    def get_tick(self, symbol):
+        return self.dbm.get_tick(symbol)
 
     def get_ticks(self, *args):
         assert len(args) > 1
@@ -416,6 +426,10 @@ class Handler(object):
             data = json_encode(data)
             
         self._write_response(data)
+
+    @get_jsoned
+    def get_depth(self, symbol):
+        return self.dbm.depth.get_current(symbol)
 
     def get_minute(self, symbol, timestamp, format='npy'):
         """Get daily minutes history.
@@ -580,7 +594,8 @@ class Handler(object):
         self.request.write_ok()
 
     @put_zipped
-    def put_depth(self, symbol, data, format='zip'):
+    def put_depth(self, symbol, rawdata):
+        self.dbm.depth.update_current(symbol, rawdata)
         self.request.write_ok()
 
     @put_zipped

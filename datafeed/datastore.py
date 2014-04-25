@@ -479,6 +479,14 @@ class RockStore(object):
         self._rdb.put(key, value)
         return key
 
+    def get_current(self, symbol):
+        key = 'cached_%s_%s' % (self.klass[:-7].lower(), symbol)
+        return self._get(key)
+
+    def update_current(self, symbol, value):
+        key = 'cached_%s_%s' % (self.klass[:-7].lower(), symbol)
+        self._put(key, value)
+
     def _get(self, key):
         return self._rdb.get(key)
 
@@ -493,7 +501,6 @@ class TickHistory(RockStore):
 class DepthHistory(RockStore):
 
     BASE_PREFIX = transform.int2bytes(2, fill_size=2)
-
 
 class TradeHistory(RockStore):
 

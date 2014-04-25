@@ -248,10 +248,10 @@ class Client(object):
         data = zlib.compress(json.dumps(adict))
         return self.execute_command('PUT_TICk', symbol, str(timestamp), data, 'zip')
 
-    def put_depth(self, symbol, adict):
+    def put_depth(self, symbol, timestamp, adict):
         assert isinstance(adict, dict)
-        data = zlib.compress(marshal.dumps(adict))
-        return self.execute_command('PUT_DEPTH', symbol, data, 'zip')
+        data = zlib.compress(json.dumps(adict))
+        return self.execute_command('PUT_DEPTH', symbol, str(timestamp), data, 'zip')
 
     def put_trade(self, symbol, adict):
         assert isinstance(adict, dict)
