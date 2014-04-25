@@ -242,6 +242,21 @@ class Client(object):
         data = zlib.compress(marshal.dumps(adict))
         return self.execute_command('PUT_TICKS', data, 'zip')
 
+    def put_tick(self, symbol, adict):
+        assert isinstance(adict, dict)
+        data = zlib.compress(marshal.dumps(adict))
+        return self.execute_command('PUT_TICk', symbol, data, 'zip')
+
+    def put_depth(self, symbol, adict):
+        assert isinstance(adict, dict)
+        data = zlib.compress(marshal.dumps(adict))
+        return self.execute_command('PUT_DEPTH', symbol, data, 'zip')
+
+    def put_trade(self, symbol, adict):
+        assert isinstance(adict, dict)
+        data = zlib.compress(marshal.dumps(adict))
+        return self.execute_command('PUT_TRADE', symbol, data, 'zip')
+
     def put_reports(self, *args, **kwds):
         return self.put_ticks(*args, **kwds)
 

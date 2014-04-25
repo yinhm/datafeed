@@ -85,6 +85,7 @@ For more details: http://redis.io/topics/protocol
 '''
 import datetime
 import errno
+import functools
 import logging
 import marshal
 import os
@@ -109,6 +110,7 @@ from datafeed.utils import json_encode
 
 
 __all__ = ['Server', 'Connection', 'Application', 'Request', 'Handler']
+
 
 class Server(TCPServer):
     def __init__(self, request_callback, io_loop=None, auth_password=None, **kwargs):
@@ -312,6 +314,28 @@ class Application(object):
         return handler
 
 
+def put_zipped(method):
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwds):
+        assert len(args) == 3
+        assert args[-1] == 'zip'
+
+        symbol, data, fmt = args
+
+        try:
+            data = marshal.loads(zlib.decompress(data))
+            assert isinstance(data, dict)
+        except StandardError:
+            return self.request.write("-ERR wrong data format\r\n")
+
+        dbname = method.__name__.split('_')[1]
+        db = getattr(self.dbm, dbname)
+        func = getattr(db, 'put')
+        func(symbol, data)
+        return method(self, symbol, data)
+    return wrapper
+
+
 class Handler(object):
 
     SUPPORTED_METHODS = ('auth',
@@ -328,7 +352,12 @@ class Handler(object):
                          'get_sector',
                          'get_stats',
                          'get_tick',
+                         'get_depth',
+                         'get_trade',
+                         'put_tick',
                          'put_ticks',
+                         'put_depth',
+                         'put_trade',
                          'put_minute',
                          'put_1minute',
                          'put_5minute',
@@ -543,6 +572,19 @@ class Handler(object):
         self.dbm.update_ticks(data)
         self.request.write_ok()
         
+    @put_zipped
+    def put_tick(self, symbol, data):
+        self.dbm.tickstore.update(data)
+        self.request.write_ok()
+
+    @put_zipped
+    def put_depth(self, symbol, data, format='zip'):
+        self.request.write_ok()
+
+    @put_zipped
+    def put_trade(self, symbol, data, format='zip'):
+        self.request.write_ok()
+
     def put_minute(self, symbol, data, format='npy'):
         func = getattr(self.dbm, "update_minute")
         self._put(func, symbol, data, format)
