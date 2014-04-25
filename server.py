@@ -25,12 +25,13 @@ DATA_DIR = os.path.join(os.path.realpath(os.path.dirname(__file__)),
 
 define("port", default=8082, help="run on the given port", type=int)
 define("datadir", default=DATA_DIR, help="default data dir", type=str)
+define("rdb", default=False, help="enable rocksdb for archive data", type=bool)
 
 
 def main():
     tornado.options.parse_command_line()
 
-    app = ImiguApplication(options.datadir, SH())
+    app = ImiguApplication(options.datadir, SH(), rdb=options.rdb)
     server = Server(app, auth_password=config.AUTH_PASSWORD)
     server.listen(options.port)
     io_loop = tornado.ioloop.IOLoop.instance()
