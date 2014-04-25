@@ -52,7 +52,8 @@ class HandlerTest(unittest.TestCase):
 
         data = request.result.split('\r\n')[1]
         result = json.loads(data)
-        self.assertTrue(expected, result)
+        self.assertEqual(expected, result)
+        self.assertTrue('close' in result)
 
         expected = result
         iter = self.app.dbm.tick.query(timestamp)
@@ -60,7 +61,7 @@ class HandlerTest(unittest.TestCase):
         key = keys[0]
         rawdata = self.app.dbm.tick.get(key)
         actual = json.loads(rawdata)
-        self.assertTrue(expected, actual)
+        self.assertEqual(expected, actual)
 
 
     def test_get_put_depth(self):
@@ -77,11 +78,12 @@ class HandlerTest(unittest.TestCase):
         self.app(request)
 
         data = request.result.split('\r\n')[1]
-        result = json.loads(data)
-        self.assertTrue(depth, result)
+        actual = json.loads(data)
+        self.assertEqual(depth, actual)
 
-        actual = self.app.dbm.depth.get('cached_depth_SH000001')
-        self.assertTrue(depth, actual)
+        result = self.app.dbm.depth.get('cached_depth_SH000001')
+        actual = json.loads(result)
+        self.assertEqual(depth, actual)
 
 
     def test_get_put_trade(self):
@@ -98,11 +100,12 @@ class HandlerTest(unittest.TestCase):
         self.app(request)
 
         data = request.result.split('\r\n')[1]
-        result = json.loads(data)
-        self.assertTrue(trade, result)
+        actual = json.loads(data)
+        self.assertEqual(trade, actual)
 
-        actual = self.app.dbm.trade.get('cached_trade_SH000001')
-        self.assertTrue(trade, actual)
+        data = self.app.dbm.trade.get('cached_trade_SH000001')
+        actual = json.loads(data)
+        self.assertEqual(trade, actual)
 
 
 if __name__ == '__main__':

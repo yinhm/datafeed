@@ -345,7 +345,7 @@ def get_jsoned(method):
         symbol, fmt = args
 
         try:
-            data = json.dumps(method(self, symbol))
+            data = method(self, symbol)
             self._write_response(data)
         except KeyError:
             self.request.write("-ERR Symbol %s not exists.\r\n" % symbol)
@@ -415,7 +415,7 @@ class Handler(object):
 
     @get_jsoned
     def get_tick(self, symbol):
-        return self.dbm.get_tick(symbol)
+        return json.dumps(self.dbm.get_tick(symbol))
 
     def get_ticks(self, *args):
         assert len(args) > 1
