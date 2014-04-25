@@ -410,6 +410,18 @@ class RockStaticPrefix(rocksdb.interfaces.SliceTransform):
 
 
 class RockStore(object):
+    """Rocksdb store for Tick/Depth/Trade data.
+
+    Rockstore key are prefixed[1] with 3-bytes, the first two bytes are
+    manually fixed identify(eg: 0x0001) for different data type, so the
+    max data types are 2**16 - 1 or equally 65535 which should be sufficient.
+
+    The third bytes are the leading bytes of offseted[2] timestamp(millisecond),
+    so a day range should not cross more than 2 of the prefixes.
+
+    [1] https://github.com/facebook/rocksdb/wiki/Proposal-for-prefix-API
+    [2] simpleflake.SIMPLEFLAKE_EPOCH = 946702800
+    """
 
     def __init__(self, rdb):
         assert self.BASE_PREFIX and len(self.BASE_PREFIX) == 2
