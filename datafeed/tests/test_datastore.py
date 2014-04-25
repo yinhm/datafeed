@@ -32,17 +32,15 @@ class TestHelper(object):
         shutil.rmtree(self.datadir, ignore_errors=True)
 
 
-class ManagerTest(unittest.TestCase):
+class ManagerTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
-        self.datadir = '/tmp/datafeed-%d' % int(time.time())
-        os.mkdir(self.datadir)
-
+        self._setup()
         self.manager = Manager(self.datadir, SH())
 
     def tearDown(self):
         self.manager.clean()
-        shutil.rmtree(self.datadir, ignore_errors=True)
+        self._clean()
 
     def test_store_filename(self):
         ret = self.manager._store
@@ -142,6 +140,12 @@ class ManagerTest(unittest.TestCase):
     def test_trade_history(self):
         ret = self.manager.trade
         self.assertTrue(isinstance(ret, datastore.TradeHistory))
+
+    def test_disable_rdb(self):
+        self._clean()
+        self._setup()
+        dbm = Manager(self.datadir, SH(), enable_rdb=False)
+        self.assertEqual(dbm._rstore, None)
 
 class DictStoreTest(unittest.TestCase):
 

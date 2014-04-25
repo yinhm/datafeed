@@ -293,7 +293,10 @@ class Request(object):
 class Application(object):
 
     def __init__(self, datadir, exchange, **kwargs):
-        self.dbm = datastore.Manager(datadir, exchange)
+        kwds = {}
+        if 'rdb' in kwargs:
+            kwds['enable_rdb'] = kwargs['rdb']
+        self.dbm = datastore.Manager(datadir, exchange, **kwds)
         self.exchange = exchange
 
         if 'handler' in kwargs:

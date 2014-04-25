@@ -66,14 +66,14 @@ class Manager(object):
       * Dispatching read/write dataflows(this may change).
       * Rotating daily minutes snapshot.
    '''
-    def __init__(self, datadir, exchange):
+    def __init__(self, datadir, exchange, enable_rdb=True):
         self.datadir = datadir
         self.exchange = exchange
 
         logging.debug("Loading h5file and memory store...")
         self._store = h5py.File(os.path.join(self.datadir, 'data.h5'))
         self._dstore = DictStore.open(os.path.join(self.datadir, 'dstore.dump'))
-        self._rstore = RockStore.open(os.path.join(self.datadir, 'rdb'))
+        self._rstore = None
 
         # Dict Store
         self._tickstore = None
@@ -90,9 +90,11 @@ class Manager(object):
         # merge tickstore to TickHistory?
         # TODO: move sectorstore to rstore
         # TODO: move divstore to rstore
-        self.tick = TickHistory(self._rstore)
-        self.depth = DepthHistory(self._rstore)
-        self.trade = TradeHistory(self._rstore)
+        if enable_rdb:
+            self._rstore = RockStore.open(os.path.join(self.datadir, 'rdb'))
+            self.tick = TickHistory(self._rstore)
+            self.depth = DepthHistory(self._rstore)
+            self.trade = TradeHistory(self._rstore)
 
         self._mtime = None
 
