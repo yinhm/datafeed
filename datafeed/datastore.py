@@ -33,6 +33,7 @@ import atexit
 import datetime
 import h5py
 import gc
+import json
 import logging
 import marshal
 import os
@@ -44,7 +45,6 @@ import UserDict
 
 import cPickle as pickle
 import numpy as np
-
 
 from datafeed import transform
 from datafeed.utils import *
@@ -269,7 +269,7 @@ class Manager(object):
 
         if self.enable_rdb:
             for k, v in data.iteritems():
-                self.tick.put(k, v['timestamp'], v)
+                self.tick.put(k, v['timestamp'], json.dumps(v))
 
     def update_minute(self, symbol, data):
         # determine datastore first
@@ -468,14 +468,16 @@ class RockStore(object):
         return self.BASE_PREFIX + transform.int2bytes(leading_flake, 8)[:1]
 
     def get(self, key):
+        key = transform.b(key)
         return self._get(key)
 
     def put(self, symbol, timestamp, value):
         """
         timestamp: ms, 1/1,000
         """
+        symbol = symbol.encode('ascii')
         flakeid = simpleflake.simpleflake(timestamp) # 64bits
-        key = self.BASE_PREFIX + transform.int2bytes(flakeid, 8) + transform.b(symbol)
+        key = self.BASE_PREFIX + transform.int2bytes(flakeid, 8) + symbol
         self._rdb.put(key, value)
         return key
 
@@ -488,10 +490,10 @@ class RockStore(object):
         self._put(key, value)
 
     def _get(self, key):
-        return self._rdb.get(key)
+        return self._rdb.get(str(key))
 
     def _put(self, key, value):
-        self._rdb.put(key, value)
+        self._rdb.put(str(key), value)
 
 
 class TickHistory(RockStore):

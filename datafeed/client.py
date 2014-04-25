@@ -256,7 +256,7 @@ class Client(object):
     def put_trade(self, symbol, timestamp, adict):
         assert isinstance(adict, dict)
         data = zlib.compress(json.dumps(adict))
-        return self.execute_command('PUT_TRADE', symbol, str(timestamp), 'zip')
+        return self.execute_command('PUT_TRADE', symbol, str(timestamp), data, 'zip')
 
     def put_reports(self, *args, **kwds):
         return self.put_ticks(*args, **kwds)

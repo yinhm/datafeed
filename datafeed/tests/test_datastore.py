@@ -1,5 +1,6 @@
 from __future__ import with_statement
 
+import binascii
 import h5py
 import json
 import logging
@@ -9,7 +10,6 @@ import re
 import shutil
 import time
 import unittest
-
 import numpy as np
 
 from datetime import datetime
@@ -247,6 +247,12 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
         ts = 1397805240
         key = self.tick.put('btc', ts, b"v2")
         self.assertTrue(key.startswith('\x00\x014'))
+
+    def test_get_with_bytes_key(self):
+        ts = 1397805240
+        hexstr = '0001349728103d28500a5348303030303031'
+        key = binascii.unhexlify(hexstr)
+        self.assertIsNone(self.tick.get(key))
 
     def test_prefix_key(self):
         self.assertTrue(self.tick.prefix(1397805240), '\x00\x014')
