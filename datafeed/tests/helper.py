@@ -1,10 +1,16 @@
+import atexit
 import datetime
 import numpy
 import os
+import shutil
 import time
 
 datadir = '/tmp/datafeed-%d' % int(time.time() * 1000)
 os.mkdir(datadir)
+
+def shutdown():
+    shutil.rmtree(datadir, ignore_errors=True)
+atexit.register(shutdown)
 
 def sample_key():
     return 'SH000001'
