@@ -15,7 +15,7 @@ Supported commands
     get_mtime
     get_list
     get_tick
-    get_tickss
+    get_ticks
     get_minute
     get_1minute
     get_5minute
@@ -374,10 +374,9 @@ def get_jsoned(method):
 class Handler(object):
 
     SUPPORTED_METHODS = ('auth',
-                         'get_last_quote_time',
+                         'get_meta',
                          'get_mtime',
                          'get_list',
-                         'get_tick',
                          'get_ticks',
                          'get_minute',
                          'get_1minute',
@@ -389,6 +388,7 @@ class Handler(object):
                          'get_tick',
                          'get_depth',
                          'get_trade',
+                         'put_meta',
                          'put_tick',
                          'put_ticks',
                          'put_depth',
@@ -433,6 +433,10 @@ class Handler(object):
             ret = self.dbm.tickstore.to_dict()
 
         return self._write_response(json_encode(ret))
+
+    @get_jsoned
+    def get_meta(self, key):
+        return self.dbm.meta.get(key)
 
     @get_jsoned
     def get_tick(self, symbol):
@@ -611,6 +615,10 @@ class Handler(object):
         self.dbm.update_ticks(data)
         self.request.write_ok()
         
+    @put_zipped
+    def put_meta(self, symbol, rawdata):
+        self.request.write_ok()
+
     @put_zipped
     def put_tick(self, symbol, data):
         data = json.loads(data)

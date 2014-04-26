@@ -93,6 +93,7 @@ class Manager(object):
         # TODO: move divstore to rstore
         if enable_rdb:
             self._rstore = RockStore.open(os.path.join(self.datadir, 'rdb'))
+            self.meta = Meta(self._rstore)
             self.tick = TickHistory(self._rstore)
             self.depth = DepthHistory(self._rstore)
             self.trade = TradeHistory(self._rstore)
@@ -520,6 +521,36 @@ class RockStore(object):
         flakeid = simpleflake.simpleflake(timestamp) # 64bits
         return self.BASE_PREFIX + transform.int2bytes(flakeid, 8) + symbol
 
+
+
+class Meta(RockStore):
+
+    BASE_PREFIX = transform.int2bytes(0, fill_size=2)
+
+    def prefix(self):
+        """Meta table ignoring timestamp"""
+        return self.BASE_PREFIX + transform.int2bytes(0, fill_size=1)
+
+    def get(self, key):
+        """Meta get.
+
+        Paramaters
+        ==========
+        key: string, without key prefix
+        """
+        key = self._key(key)
+        return self._get(key)
+
+    def put(self, symbol, timestamp, value):
+        """
+        timestamp: ms, 1/1,000
+        """
+        key = self._key(symbol)
+        self._rdb.put(key, value)
+        return key
+
+    def _key(self, key):
+        return self.prefix() + key.encode('ascii')
 
 
 class TickHistory(RockStore):

@@ -314,6 +314,25 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
         self.assertTrue(trades[-1] in results)
 
 
+class MetaTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self._setup()
+
+        self.store = datastore.RockStore.open(self.datadir)
+        self.meta = datastore.Meta(self.store)
+
+    def tearDown(self):
+        del(self.meta)
+        del(self.store)
+        gc.collect()
+        self._clean()
+
+    def test_get_put(self):
+        self.meta.put("a", time.time(), "b")
+        ret = self.meta.get("a")
+        self.assertEqual(b"b", ret)
+
 class DayTest(unittest.TestCase):
 
     def setUp(self):

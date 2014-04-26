@@ -2,6 +2,7 @@ import errno
 import json
 import marshal
 import socket
+import time
 import zlib
 
 import numpy as np
@@ -184,6 +185,9 @@ class Client(object):
     def get_list(self, match='', format='json'):
         return self.execute_command('GET_LIST', match, format)
 
+    def get_meta(self, key, format='json'):
+        return self.execute_command('GET_META', key, format)
+
     def get_tick(self, symbol, format='json'):
         return self.execute_command('GET_TICK', symbol, format)
 
@@ -242,6 +246,10 @@ class Client(object):
         assert isinstance(adict, dict)
         data = zlib.compress(marshal.dumps(adict))
         return self.execute_command('PUT_TICKS', data, 'zip')
+
+    def put_meta(self, key, value):
+        data = zlib.compress(json.dumps(value))
+        return self.execute_command('PUT_META', key, str(time.time()), data, 'zip')
 
     def put_tick(self, symbol, timestamp, adict):
         assert isinstance(adict, dict)

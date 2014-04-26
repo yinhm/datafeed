@@ -123,5 +123,14 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(ret, 'OK')
 
 
+    def test_get_put_trade_meta(self):
+        key = "last_trade_log"
+        ret = self.client.put_meta(key, 'xx')
+        self.assertEqual(ret, 'OK')
+
+        ret = self.client.get_meta(key)
+        self.assertEqual('xx', ret)
+
+
 if __name__ == '__main__':
     unittest.main()

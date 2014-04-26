@@ -123,9 +123,33 @@ class HandlerTest(unittest.TestCase):
         actual = json.loads(data)
         self.assertEqual(1378035045, actual['date'])
 
-        # data = self.app.dbm.trade.get('cached_trade_SH000001')
-        # actual = json.loads(data)
-        # self.assertEqual(trade, actual)
+    def test_get_put_meta(self):
+        key = 'trades_synced_last_time'
+        timestamp = time.time()
+        data = zlib.compress(json.dumps(timestamp))
+        request = MockRequest(None, 'put_meta', key, timestamp, data, 'zip')
+        self.app(request)
+        self.assertEqual('+OK\r\n', request.result)
+
+        request = MockRequest(None, 'get_meta', key, 'json')
+        self.app(request)
+
+        data = request.result.split('\r\n')[1]
+        actual = json.loads(data)
+        self.assertEqual(timestamp, actual)
+
+        rawdata = {"date":1378035025,"price":806.37,"amount":0.46,"tid":1,"type":"sell"}
+        data = zlib.compress(json.dumps(rawdata))
+        request = MockRequest(None, 'put_meta', key, timestamp, data, 'zip')
+        self.app(request)
+        self.assertEqual('+OK\r\n', request.result)
+
+        request = MockRequest(None, 'get_meta', key, 'json')
+        self.app(request)
+
+        data = request.result.split('\r\n')[1]
+        actual = json.loads(data)
+        self.assertEqual(rawdata, actual)
 
 
 if __name__ == '__main__':
