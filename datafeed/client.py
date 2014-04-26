@@ -268,7 +268,7 @@ class Client(object):
 
     def mput_trade(self, symbol, rawdata):
         data = zlib.compress(rawdata)
-        return self.execute_command('PUT_TRADE', symbol, data, 'zip')
+        return self.execute_command('MPUT_TRADE', symbol, data, 'zip')
 
     def put_reports(self, *args, **kwds):
         return self.put_ticks(*args, **kwds)
