@@ -328,6 +328,10 @@ class MetaTest(unittest.TestCase, TestHelper):
         gc.collect()
         self._clean()
 
+    def test_is_none(self):
+        ret = self.meta.get("a1")
+        self.assertIsNone(None, ret)
+
     def test_get_put(self):
         self.meta.put("a", time.time(), "b")
         ret = self.meta.get("a")

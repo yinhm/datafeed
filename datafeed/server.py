@@ -366,6 +366,8 @@ def get_jsoned(method):
 
         try:
             data = method(self, symbol)
+            if not data:
+                data = 'null' # fix for None
             self._write_response(data)
         except KeyError:
             self.request.write("-ERR Symbol %s not exists.\r\n" % symbol)

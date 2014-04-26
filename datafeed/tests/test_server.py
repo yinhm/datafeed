@@ -125,6 +125,13 @@ class HandlerTest(unittest.TestCase):
 
     def test_get_put_meta(self):
         key = 'trades_synced_last_time'
+
+        request = MockRequest(None, 'get_meta', key, 'json')
+        self.app(request)
+        data = request.result.split('\r\n')[1]
+        actual = json.loads(data)
+        self.assertEqual(None, actual)
+
         timestamp = time.time()
         data = zlib.compress(json.dumps(timestamp))
         request = MockRequest(None, 'put_meta', key, timestamp, data, 'zip')
