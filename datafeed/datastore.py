@@ -451,7 +451,8 @@ class RockStore(object):
         opts.target_file_size_base = 16 * (1024 ** 2) # 16MB
         opts.filter_policy = rocksdb.BloomFilterPolicy(10)
         opts.block_cache = rocksdb.LRUCache(256 * (1024 ** 2)) # 256MB
-        opts.block_cache_compressed = rocksdb.LRUCache(64 * (1024 ** 2)) # 64MB
+        # enable block_cache_compressed will cause facebook/rocksdb issue #111
+        # opts.block_cache_compressed = rocksdb.LRUCache(64 * (1024 ** 2)) # 64MB
 
         return rocksdb.DB(path, opts)
 
