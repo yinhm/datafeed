@@ -108,5 +108,25 @@ class HandlerTest(unittest.TestCase):
         self.assertEqual(trade, actual)
 
 
+    def test_mput_trade(self):
+        symbol = helper.sample_key()
+        trades ="""[{"date":1378035025,"price":806.37,"amount":0.46,"tid":1,"type":"sell"},{"date":1378035025,"price":810,"amount":0.56,"tid":2,"type":"buy"},{"date":1378035025,"price":806.37,"amount":4.44,"tid":3,"type":"sell"},{"date":1378035025,"price":803.2,"amount":0.8,"tid":4,"type":"buy"},{"date":1378035045,"price":804.6,"amount":1.328,"tid":5,"type":"buy"}]"""
+        data = zlib.compress(trades)
+        request = MockRequest(None, 'mput_trade', symbol, data, 'zip')
+        self.app(request)
+        self.assertEqual('+OK\r\n', request.result)
+
+        request = MockRequest(None, 'get_trade', symbol, 'json')
+        self.app(request)
+
+        data = request.result.split('\r\n')[1]
+        actual = json.loads(data)
+        self.assertEqual(1378035045, actual['date'])
+
+        # data = self.app.dbm.trade.get('cached_trade_SH000001')
+        # actual = json.loads(data)
+        # self.assertEqual(trade, actual)
+
+
 if __name__ == '__main__':
     unittest.main()

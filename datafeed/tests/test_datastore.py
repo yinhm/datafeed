@@ -298,7 +298,20 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
         results = list(iter)
         self.assertTrue(keys[0] in results)
         self.assertTrue(keys[-1] in results)
-        self.assertTrue(len(results), len(keys))
+        self.assertEqual(len(results), len(keys))
+
+    def test_batch_write(self):
+        trades = [{"date":1378035025,"price":806.37,"amount":0.46,"tid":1,"type":"sell"},
+                  {"date":1378035025,"price":810,"amount":0.56,"tid":2,"type":"buy"},
+                  {"date":1378035025,"price":806.37,"amount":4.44,"tid":3,"type":"sell"},
+                  {"date":1378035025,"price":803.2,"amount":0.8,"tid":4,"type":"buy"},
+                  {"date":1378035045,"price":804.6,"amount":1.328,"tid":5,"type":"buy"}]
+        self.tick.mput('SH01', trades)
+        iter = self.tick.query_values(1378035025)
+        results = [json.loads(row) for row in list(iter)]
+        self.assertEqual(len(trades), len(results))
+        self.assertTrue(trades[0] in results)
+        self.assertTrue(trades[-1] in results)
 
 
 class DayTest(unittest.TestCase):

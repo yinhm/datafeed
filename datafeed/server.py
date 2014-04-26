@@ -324,14 +324,34 @@ def put_zipped(method):
         symbol, timestamp, data, fmt = args
 
         try:
-            data = zlib.decompress(data)
+            rawdata = zlib.decompress(data)
         except StandardError:
             return self.request.write("-ERR wrong data format\r\n")
 
         dbname = method.__name__.split('_')[1]
         db = getattr(self.dbm, dbname)
         func = getattr(db, 'put')
-        func(symbol, float(timestamp), data)
+        func(symbol, float(timestamp), rawdata)
+        return method(self, symbol, rawdata)
+    return wrapper
+
+
+def mput_zipped(method):
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwds):
+        assert len(args) == 3
+        assert args[-1] == 'zip'
+
+        symbol, data, fmt = args
+
+        try:
+            data = json.loads(zlib.decompress(data))
+        except StandardError:
+            return self.request.write("-ERR wrong data format\r\n")
+
+        fname, dbname = method.__name__.split('_')
+        db = getattr(self.dbm, dbname)
+        getattr(db, fname)(symbol, data)
         return method(self, symbol, data)
     return wrapper
 
@@ -376,7 +396,8 @@ class Handler(object):
                          'put_minute',
                          'put_1minute',
                          'put_5minute',
-                         'put_day')
+                         'put_day',
+                         'mput_trade')
 
     def __init__(self, application, request, **kwargs):
         self.application = application
@@ -605,6 +626,11 @@ class Handler(object):
     @put_zipped
     def put_trade(self, symbol, rawdata):
         self.dbm.trade.update_current(symbol, rawdata)
+        self.request.write_ok()
+
+    @mput_zipped
+    def mput_trade(self, symbol, rawdata):
+        self.dbm.trade.update_current(symbol, json.dumps(rawdata[-1]))
         self.request.write_ok()
 
     def put_minute(self, symbol, data, format='npy'):

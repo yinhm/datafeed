@@ -258,6 +258,10 @@ class Client(object):
         data = zlib.compress(json.dumps(adict))
         return self.execute_command('PUT_TRADE', symbol, str(timestamp), data, 'zip')
 
+    def mput_trade(self, symbol, rawdata):
+        data = zlib.compress(rawdata)
+        return self.execute_command('PUT_TRADE', symbol, data, 'zip')
+
     def put_reports(self, *args, **kwds):
         return self.put_ticks(*args, **kwds)
 

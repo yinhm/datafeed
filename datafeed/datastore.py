@@ -461,6 +461,20 @@ class RockStore(object):
         iter.seek(prefix)
         return iter
 
+    def query_values(self, timestamp):
+        """Query rocksdb store with prefix"""
+        prefix = self.prefix(timestamp)
+        iter = self._rdb.itervalues(prefix=prefix)
+        iter.seek(prefix)
+        return iter
+
+    def query_items(self, timestamp):
+        """Query rocksdb store with prefix"""
+        prefix = self.prefix(timestamp)
+        iter = self._rdb.iteritems(prefix=prefix)
+        iter.seek(prefix)
+        return iter
+
     def prefix(self, timestamp):
         second_time = timestamp - simpleflake.SIMPLEFLAKE_EPOCH
         millisecond_time = int(second_time * 1000)
@@ -475,11 +489,17 @@ class RockStore(object):
         """
         timestamp: ms, 1/1,000
         """
-        symbol = symbol.encode('ascii')
-        flakeid = simpleflake.simpleflake(timestamp) # 64bits
-        key = self.BASE_PREFIX + transform.int2bytes(flakeid, 8) + symbol
+        key = self._key(symbol, timestamp)
         self._rdb.put(key, value)
         return key
+
+    def mput(self, symbol, data):
+        """batch write"""
+        batch = rocksdb.WriteBatch()
+        for row in data:
+            key = self._key(symbol, row['date'])
+            batch.put(key, json.dumps(row))
+        self._rdb.write(batch)
 
     def get_current(self, symbol):
         key = 'cached_%s_%s' % (self.klass[:-7].lower(), symbol)
@@ -494,6 +514,12 @@ class RockStore(object):
 
     def _put(self, key, value):
         self._rdb.put(str(key), value)
+
+    def _key(self, symbol, timestamp):
+        symbol = symbol.encode('ascii')
+        flakeid = simpleflake.simpleflake(timestamp) # 64bits
+        return self.BASE_PREFIX + transform.int2bytes(flakeid, 8) + symbol
+
 
 
 class TickHistory(RockStore):
