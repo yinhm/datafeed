@@ -1,4 +1,5 @@
 import errno
+import functools
 import json
 import marshal
 import socket
@@ -17,6 +18,31 @@ __all__ = ['Client', 'ConnectionError']
 
 class ConnectionError(Exception):
     pass
+
+
+def put_zipped(method):
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwds):
+        assert len(args) == 2 or len(args) == 3
+
+        args = list(args)
+        # timstamp
+        if len(args) == 2:
+            args.insert(1, time.time())
+        args[1] = str(args[1])
+
+        # rawdata
+        rawdata = args[-1]
+        if ('jsondata' not in kwds) or \
+           kwds['jsondata'] != True:
+            rawdata = json.dumps(rawdata)
+        args[-1] = zlib.compress(rawdata)
+        args.append('zip')
+        apiname = method.__name__.upper()
+
+        # args should be [symbol, timestamp, rawdata, zip]
+        return self.execute_command(apiname, *args)
+    return wrapper
 
 
 class Client(object):
@@ -247,28 +273,25 @@ class Client(object):
         data = zlib.compress(marshal.dumps(adict))
         return self.execute_command('PUT_TICKS', data, 'zip')
 
+    @put_zipped
     def put_meta(self, key, value):
-        data = zlib.compress(json.dumps(value))
-        return self.execute_command('PUT_META', key, str(time.time()), data, 'zip')
+        pass
 
+    @put_zipped
     def put_tick(self, symbol, timestamp, adict):
-        assert isinstance(adict, dict)
-        data = zlib.compress(json.dumps(adict))
-        return self.execute_command('PUT_TICk', symbol, str(timestamp), data, 'zip')
+        pass
 
-    def put_depth(self, symbol, timestamp, adict):
-        assert isinstance(adict, dict)
-        data = zlib.compress(json.dumps(adict))
-        return self.execute_command('PUT_DEPTH', symbol, str(timestamp), data, 'zip')
+    @put_zipped
+    def put_depth(self, symbol, timestamp, rawdata):
+        pass
 
-    def put_trade(self, symbol, timestamp, adict):
-        assert isinstance(adict, dict)
-        data = zlib.compress(json.dumps(adict))
-        return self.execute_command('PUT_TRADE', symbol, str(timestamp), data, 'zip')
+    @put_zipped
+    def put_trade(self, symbol, timestamp, rawdata):
+        pass
 
+    @put_zipped
     def mput_trade(self, symbol, rawdata):
-        data = zlib.compress(rawdata)
-        return self.execute_command('MPUT_TRADE', symbol, data, 'zip')
+        pass
 
     def put_reports(self, *args, **kwds):
         return self.put_ticks(*args, **kwds)

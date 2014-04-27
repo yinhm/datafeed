@@ -114,6 +114,15 @@ class ClientTest(unittest.TestCase):
         self.assertEqual(ret, 'OK')
 
 
+    def test_get_put_raw_depth(self):
+        symbol = "SH01"
+        timestamp = time.time()
+        depth = '{"bids": [[2767, 16.3121], ["2766.5", 0.004], ["2766.04", 0.01], [2766, 0.004], ["2765.85", 1], ["2765.5", 0.002], ["2765.44", 0.362], ["2765.04", 0.01], [2765, 10.003], ["2764.5", 0.001]], "asks": [["2871.21", 0.01], ["2870.62", 0.2652], [2870, 17.8974], [2869, 5.3053], ["2868.09", 0.01], [2868, 11.1509], ["2867.09", 0.01], [2867, 234.221], ["2866.09", 0.01], ["2866.03", 1]]}'
+
+        ret = self.client.put_depth(symbol, timestamp, depth, jsondata=True)
+        self.assertEqual(ret, 'OK')
+
+
     def test_get_put_trade(self):
         symbol = "SH01"
         timestamp = time.time()
