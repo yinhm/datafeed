@@ -313,6 +313,20 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
         self.assertTrue(trades[0] in results)
         self.assertTrue(trades[-1] in results)
 
+    def test_range_query(self):
+        db = datastore.TradeHistory(self.store)
+        trades = [{"date":1369275153,"price":810,"amount":0.56,"tid":2,"type":"buy"},
+                  {"date":1378035025,"price":806.37,"amount":0.46,"tid":1,"type":"sell"},
+                  {"date":1381192637,"price":806.37,"amount":4.44,"tid":3,"type":"sell"},
+                  {"date":1382604356,"price":803.2,"amount":0.8,"tid":4,"type":"buy"},
+                  {"date":1384191413,"price":804.6,"amount":1.328,"tid":5,"type":"buy"}]
+        db.mput('SH01', trades)
+        iter = db.range_query(1369275153, 1384191413)
+        results = [json.loads(value) for key, value in iter]
+        self.assertEqual(len(trades), len(results))
+        self.assertTrue(trades[0] in results)
+        self.assertTrue(trades[-1] in results)
+
 
 class MetaTest(unittest.TestCase, TestHelper):
 

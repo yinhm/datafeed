@@ -30,6 +30,7 @@ you could distinguish them by prefix.
 '''
 
 import atexit
+import binascii
 import datetime
 import h5py
 import gc
@@ -472,6 +473,26 @@ class RockStore(object):
 
     def query_items(self, timestamp):
         """Query rocksdb store with prefix"""
+        prefix = self.prefix(timestamp)
+        iter = self._rdb.iteritems(prefix=prefix)
+        iter.seek(prefix)
+        return iter
+
+    def range_query(self, start_time, stop_time):
+        """Range query rocksdb store in a time window."""
+        prefixes = set()
+        for i in xrange(start_time, stop_time, 86400):
+            prefixes.add(self.prefix(i))
+        prefixes.add(self.prefix(stop_time))
+
+        for prefix in prefixes:
+            iteration = self._rdb.iteritems(prefix=prefix)
+            iteration.seek(prefix)
+            for key, value in iteration:
+                yield key, value
+
+    def range_prefix(self, start_time, stop_time):
+        """Get prefixes in a time range"""
         prefix = self.prefix(timestamp)
         iter = self._rdb.iteritems(prefix=prefix)
         iter.seek(prefix)
