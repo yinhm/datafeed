@@ -8,10 +8,6 @@ import time
 datadir = '/tmp/datafeed-%d' % int(time.time() * 1000)
 os.mkdir(datadir)
 
-def shutdown():
-    shutil.rmtree(datadir, ignore_errors=True)
-atexit.register(shutdown)
-
 def sample_key():
     return 'SH000001'
 
@@ -49,3 +45,18 @@ def sample_minutes():
         row['time'] = int(t)
 
     return data
+
+
+
+import subprocess
+import signal
+
+path = os.path.dirname(os.path.realpath(__file__))
+server = os.path.join(path, 'fakeserver.py')
+args = ['/usr/bin/python', server, '--log_file_prefix=/tmp/df.log', '--logging=debug']
+pid = subprocess.Popen(args)
+
+def shutdown():
+    shutil.rmtree(datadir, ignore_errors=True)
+    pid.send_signal(signal.SIGTERM)
+atexit.register(shutdown)

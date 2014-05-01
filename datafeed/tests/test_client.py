@@ -22,10 +22,13 @@ from cStringIO import StringIO
 from datetime import datetime
 from datafeed.client import Client
 
+import helper
+
+
 class ClientTest(unittest.TestCase):
 
     def setUp(self):
-        self.client = Client()
+        self.client = Client(port=55555)
 
         today = datetime.today()
         timestamp = int(time.mktime((today.year, today.month, today.day,
