@@ -222,8 +222,11 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
     def setUp(self):
         self._setup()
 
+        plain = datastore.PlainTableRockStore.open(
+            os.path.join(self.datadir, 'plain'))
+        self.meta = datastore.Meta(plain, SH())
         self.store = datastore.RockStore.open(self.datadir)
-        self.tick = datastore.TickHistory(self.store)
+        self.tick = datastore.TickHistory(self.store, self.meta)
 
     def tearDown(self):
         del(self.tick)
@@ -243,19 +246,70 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
         key = self.tick.put('btc', ts, b"v")
         self.assertEqual(b"v", self.store.get(key))
 
+    def test_micro_timestamp(self):
+        ts = 1399042969.000442
+        actual = self.tick._micro_timestamp(ts)
+        self.assertEqual(1399042969000442, actual)
+
+        ts = 1399042969
+        actual = self.tick._micro_timestamp(ts)
+        self.assertNotEqual(1399042969, actual)
+        actual = actual / 10**6
+        self.assertEqual(1399042969, actual)
+
+    def test_prefix_timestamp(self):
+        ts = 1399042969.000442
+        actual = self.tick._prefix_timestamp(ts)
+        self.assertEqual('+G', actual)
+
+        ts = 441734400
+        actual = self.tick._prefix_timestamp(ts)
+        self.assertEqual('\x00\x00', actual)
+
+        ts = 441734400 + 86400
+        actual = self.tick._prefix_timestamp(ts)
+        self.assertEqual('\x00\x01', actual)
+
+        ts = 3595334400.0
+        actual = self.tick._prefix_timestamp(ts)
+        self.assertEqual('\x8e\x94', actual)
+
+    def test_prefix_key(self):
+        ts = 1399042969
+        key = self.tick._prefix_key("SH000001", ts)
+        self.assertEqual('\x00\x00\x00\x01+G', key)
+
+        key = self.tick._prefix_key("SZ:000001", ts)
+        self.assertEqual('\x01\x00\x01\x01+G', key)
+
+        key = self.tick._prefix_key("BB:BTC", ts)
+        self.assertEqual('\x02\x00\x02\x01+G', key)
+
+    def test_prefix(self):
+        actual = self.tick.prefix("SH000001", 1397805240)
+        self.assertEqual('\x00\x00\x00\x01+9', actual)
+
+        actual = self.tick.prefix("SHA:000001", 1397805240)
+        self.assertEqual('\x01\x00\x01\x01+9', actual)
+
+        actual = self.tick.prefix("SZ:999999", 1397805240)
+        self.assertEqual('\x02\x00\x02\x01+9', actual)
+
+    def test_key(self):
+        ts = 1399042969
+        key = self.tick._key("SH000001", ts) # +G
+        self.assertTrue(key.startswith('\x00\x00\x00\x01+G'))
+
     def test_put_with_prefix_key(self):
         ts = 1397805240
         key = self.tick.put('btc', ts, b"v2")
-        self.assertTrue(key.startswith('\x00\x014'))
+        self.assertTrue(key.startswith('\x00\x00\x00\x01+9'))
 
     def test_get_with_bytes_key(self):
         ts = 1397805240
         hexstr = '0001349728103d28500a5348303030303031'
         key = binascii.unhexlify(hexstr)
         self.assertIsNone(self.tick.get(key))
-
-    def test_prefix_key(self):
-        self.assertTrue(self.tick.prefix(1397805240), '\x00\x014')
 
     def test_ticks(self):
         data = """{"BTC": {"sell": "3079.86", "buy": "3078.83", "last": "3079.86", "vol": 88219.1364, "timestamp": 1397805240, "high": "3135", "low": "3038"}}
@@ -294,7 +348,7 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
             key = self.tick.put('btc', t['BTC']['timestamp'], tick)
             keys.append(key)
 
-        iter = self.tick.query(1397805240)
+        iter = self.tick.query('btc', 1397805240)
         results = list(iter)
         self.assertTrue(keys[0] in results)
         self.assertTrue(keys[-1] in results)
@@ -307,21 +361,21 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
                   {"date":1378035025,"price":803.2,"amount":0.8,"tid":4,"type":"buy"},
                   {"date":1378035045,"price":804.6,"amount":1.328,"tid":5,"type":"buy"}]
         self.tick.mput('SH01', trades)
-        iter = self.tick.query_values(1378035025)
+        iter = self.tick.query_values("SH01", 1378035025)
         results = [json.loads(row) for row in list(iter)]
         self.assertEqual(len(trades), len(results))
         self.assertTrue(trades[0] in results)
         self.assertTrue(trades[-1] in results)
 
     def test_range_query(self):
-        db = datastore.TradeHistory(self.store)
+        db = datastore.TradeHistory(self.store, self.meta)
         trades = [{"date":1369275153,"price":810,"amount":0.56,"tid":2,"type":"buy"},
                   {"date":1378035025,"price":806.37,"amount":0.46,"tid":1,"type":"sell"},
                   {"date":1381192637,"price":806.37,"amount":4.44,"tid":3,"type":"sell"},
                   {"date":1382604356,"price":803.2,"amount":0.8,"tid":4,"type":"buy"},
                   {"date":1384191413,"price":804.6,"amount":1.328,"tid":5,"type":"buy"}]
         db.mput('SH01', trades)
-        iter = db.range_query(1369275153, 1384191413)
+        iter = db.range_query("SH01", 1369275153, 1384191413)
         results = [json.loads(value) for key, value in iter]
         self.assertEqual(len(trades), len(results))
         self.assertTrue(trades[0] in results)
@@ -335,7 +389,7 @@ class MetaTest(unittest.TestCase, TestHelper):
 
         self.store = datastore.PlainTableRockStore.open(
             os.path.join(self.datadir, 'plain'))
-        self.meta = datastore.Meta(self.store)
+        self.meta = datastore.Meta(self.store, SH())
 
     def tearDown(self):
         self._clean()
@@ -348,6 +402,42 @@ class MetaTest(unittest.TestCase, TestHelper):
         self.meta.put("a", time.time(), "b")
         ret = self.meta.get("a")
         self.assertEqual(b"b", ret)
+
+    def test_init_exchange(self):
+        actual = self.meta.prefix_exchange(SH())
+        expect = transform.int2bytes(0)
+        self.assertEqual(expect, actual)
+
+    def test_exchange_prefix(self):
+        from datafeed.exchange import SZ, NYSE
+
+        actual = self.meta.prefix_exchange(None)
+        expect = transform.int2bytes(0)
+        self.assertEqual(expect, actual)
+
+        actual = self.meta.prefix_exchange(SZ())
+        expect = transform.int2bytes(1)
+        self.assertEqual(expect, actual)
+
+        actual = self.meta.prefix_exchange(NYSE())
+        expect = transform.int2bytes(2)
+        self.assertEqual(expect, actual)
+
+    def test_init_symbols(self):
+        self.assertEqual(self.meta._symbols, dict())
+
+    def test_prefix_symbol(self):
+        actual = self.meta.prefix_symbol("SH000001")
+        expect = transform.int2bytes(0, 2)
+        self.assertEqual(expect, actual)
+
+        actual = self.meta.prefix_symbol("SHA:000001")
+        expect = transform.int2bytes(1, 2)
+        self.assertEqual(expect, actual)
+
+        actual = self.meta.prefix_symbol("Huobi:BTCCNY")
+        expect = transform.int2bytes(2, 2)
+        self.assertEqual(expect, actual)
 
 class DayTest(unittest.TestCase):
 
@@ -626,11 +716,12 @@ class TestRockStaticPrefix(unittest.TestCase, TestHelper):
         self._clean()
 
     def test_prefix(self):
-        prefix = transform.int2bytes(2, 3)
+        fillsize = 6
+        prefix = transform.int2bytes(2, fillsize)
         for x in range(3000):
-            keyx = transform.int2bytes(x, 3) + b'.x'
-            keyy = transform.int2bytes(x, 3) + b'.y'
-            keyz = transform.int2bytes(x, 3) + b'.z'
+            keyx = transform.int2bytes(x, fillsize) + b'.x'
+            keyy = transform.int2bytes(x, fillsize) + b'.y'
+            keyz = transform.int2bytes(x, fillsize) + b'.z'
             self.db.put(keyx, b'x')
             self.db.put(keyy, b'y')
             self.db.put(keyz, b'z')

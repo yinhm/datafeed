@@ -56,7 +56,7 @@ class HandlerTest(unittest.TestCase):
         self.assertTrue('close' in result)
 
         expected = result
-        iter = self.app.dbm.tick.query(timestamp)
+        iter = self.app.dbm.tick.query(symbol, timestamp)
         keys = list(iter)
         key = keys[0]
         rawdata = self.app.dbm.tick.get(key)
