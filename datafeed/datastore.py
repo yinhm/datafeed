@@ -94,7 +94,9 @@ class Manager(object):
         # TODO: move divstore to rstore
         if enable_rdb:
             self._rstore = RockStore.open(os.path.join(self.datadir, 'rdb'))
-            self.meta = Meta(self._rstore)
+            self._plaintale = PlainTableRockStore.open(
+                os.path.join(self.datadir, 'plain'))
+            self.meta = Meta(self._plaintale)
             self.tick = TickHistory(self._rstore)
             self.depth = DepthHistory(self._rstore)
             self.trade = TradeHistory(self._rstore)
@@ -400,22 +402,27 @@ class Dividend(DictStoreNamespace):
     pass
 
 
+class FixedPrefixTransform(rocksdb.interfaces.SliceTransform):
+    """Fixed prefix transform for prefix_extractor.
 
-class RockStaticPrefix(rocksdb.interfaces.SliceTransform):
-    """prefix extractor of a static size. Always the first 4 bytes are used as the prefix.
-    see: http://pyrocksdb.readthedocs.org/en/v0.1/tutorial/index.html
+    See: http://pyrocksdb.readthedocs.org/en/v0.2/tutorial/index.html#prefixextractor
     """
+
+    def __init__(self, prefix_size):
+        self.prefix_size = prefix_size
+        super(FixedPrefixTransform, self).__init__()
+
     def name(self):
-        return b'static'
+        return b'FixedPrefixTransform'
 
     def transform(self, src):
-        return (0, 3)
+        return (0, self.prefix_size)
 
     def in_domain(self, src):
-        return len(src) >= 3
+        return len(src) >= self.prefix_size
 
     def in_range(self, dst):
-        return len(dst) == 3
+        return len(dst) == self.prefix_size
 
 
 class RockStore(object):
@@ -446,7 +453,7 @@ class RockStore(object):
     @classmethod
     def open(cls, path):
         opts = rocksdb.Options()
-        opts.prefix_extractor = RockStaticPrefix()
+        opts.prefix_extractor = FixedPrefixTransform(3)
         opts.create_if_missing = True
         opts.write_buffer_size = 16 * (1024 ** 2) # 16MB
         opts.target_file_size_base = 16 * (1024 ** 2) # 16MB
@@ -545,7 +552,28 @@ class RockStore(object):
 
 
 
-class Meta(RockStore):
+class PlainTableRockStore(RockStore):
+    """PlainTable[1] store for Meta data.
+    [1] https://github.com/facebook/rocksdb/wiki/PlainTable-Format
+    """
+
+    def __init__(self, rdb):
+        assert self.BASE_PREFIX and len(self.BASE_PREFIX) == 2
+        if self.klass == 'PlainTableRockStore':
+            raise StandardError("Can not initialize directly.")
+        self._rdb = rdb
+
+    @classmethod
+    def open(cls, path):
+        opts = rocksdb.Options()
+        opts.allow_mmap_reads = True
+        opts.prefix_extractor = FixedPrefixTransform(4)
+        opts.table_factory = rocksdb.PlainTableFactory()
+        opts.create_if_missing = True
+        return rocksdb.DB(path, opts)
+
+
+class Meta(PlainTableRockStore):
 
     BASE_PREFIX = transform.int2bytes(0, fill_size=2)
 
