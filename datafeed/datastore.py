@@ -36,7 +36,7 @@ import h5py
 import gc
 import json
 import logging
-import marshal
+import msgpack
 import os
 import rocksdb
 import simpleflake
@@ -626,10 +626,19 @@ class Meta(PlainTableRockStore):
         self.init_symbols()
 
     def dumps(self, data):
-        return json.dumps(data, encoding='latin1')
+        """dumps metadata to db.
+
+        Dumps and loads metadata is a little bit of slow, this is not
+        a real issue in real world, since metadata are not meaning to be
+        large or rapid changing, still, we may switch to capnproto for
+        maximum optimizing.
+        """
+        return msgpack.packb(data, use_bin_type=True)
+        # return json.dumps(data, encoding='latin1')
 
     def loads(self, data):
-        return json.loads(data, encoding='latin1')
+        return msgpack.unpackb(data, encoding='latin1')
+        # return json.loads(data, encoding='latin1')
 
     def init_exchange(self, exchange):
         rawdata = self.get(self.KEY_EX_MAP)
