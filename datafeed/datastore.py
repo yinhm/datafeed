@@ -274,8 +274,7 @@ class Manager(object):
         self.tickstore.update(data)
 
         if self.enable_rdb:
-            for k, v in data.iteritems():
-                self.tick.put(k, v['timestamp'], json.dumps(v))
+            self.tick.mput(data)
 
     def update_minute(self, symbol, data):
         # determine datastore first
@@ -533,11 +532,14 @@ class RockStore(object):
         self._rdb.put(key, value)
         return key
 
-    def mput(self, symbol, data):
-        """batch write"""
+    def mput(self, symbol, data, time_key='date'):
+        """batch write
+
+        May allow specfic time_key since upstream data differences.
+        """
         batch = rocksdb.WriteBatch()
         for row in data:
-            key = self._key(symbol, row['date'])
+            key = self._key(symbol, row[time_key])
             batch.put(key, json.dumps(row))
         self._rdb.write(batch)
 
@@ -623,14 +625,20 @@ class Meta(PlainTableRockStore):
         self.init_exchange(default_exchange)
         self.init_symbols()
 
+    def dumps(self, data):
+        return json.dumps(data, encoding='latin1')
+
+    def loads(self, data):
+        return json.loads(data, encoding='latin1')
+
     def init_exchange(self, exchange):
         rawdata = self.get(self.KEY_EX_MAP)
         if not rawdata:
             self._exchanges = {str(exchange): self.DEFAULT_EXCHANGE}
-            self.put(self.KEY_EX_MAP, None, json.dumps(self._exchanges))
+            self.put(self.KEY_EX_MAP, None, self.dumps(self._exchanges))
             rawdata = self.get(self.KEY_EX_MAP)
 
-        self._exchanges = json.loads(rawdata)
+        self._exchanges = self.loads(rawdata)
 
     def prefix_exchange(self, exchange):
         if exchange == None:
@@ -643,16 +651,16 @@ class Meta(PlainTableRockStore):
         maxv = max(self._exchanges.values())
         newv = transform.int2bytes(transform.bytes2int(maxv) + 1)
         self._exchanges[lookup] = newv
-        self.put(self.KEY_EX_MAP, None, json.dumps(self._exchanges))
+        self.put(self.KEY_EX_MAP, None, self.dumps(self._exchanges))
         return newv
 
     def init_symbols(self):
         rawdata = self.get(self.KEY_SYMBOL_MAP)
         if not rawdata:
-            self.put(self.KEY_SYMBOL_MAP, None, json.dumps(dict()))
+            self.put(self.KEY_SYMBOL_MAP, None, self.dumps(dict()))
             rawdata = self.get(self.KEY_SYMBOL_MAP)
 
-        self._symbols = json.loads(rawdata)
+        self._symbols = self.loads(rawdata)
 
     def prefix_symbol(self, symbol):
         if symbol in self._symbols:
@@ -664,7 +672,7 @@ class Meta(PlainTableRockStore):
             newint = transform.bytes2int(maxv) + 1
             newv = transform.int2bytes(newint, 2)
         self._symbols[symbol] = newv
-        self.put(self.KEY_SYMBOL_MAP, None, json.dumps(self._symbols))
+        self.put(self.KEY_SYMBOL_MAP, None, self.dumps(self._symbols))
         return newv
 
     def get(self, key):
@@ -696,6 +704,14 @@ class Meta(PlainTableRockStore):
 class TickHistory(RockStore):
 
     TABLE_PREFIX = transform.int2bytes(1)
+
+    def mput(self, data):
+        """batch write"""
+        batch = rocksdb.WriteBatch()
+        for k, v in data.iteritems():
+            key = self._key(k, v['timestamp'])
+            batch.put(key, json.dumps(v))
+        self._rdb.write(batch)
 
 class DepthHistory(RockStore):
 

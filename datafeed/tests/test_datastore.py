@@ -354,34 +354,6 @@ class TickHistoryTest(unittest.TestCase, TestHelper):
         self.assertTrue(keys[-1] in results)
         self.assertEqual(len(results), len(keys))
 
-    def test_batch_write(self):
-        trades = [{"date":1378035025,"price":806.37,"amount":0.46,"tid":1,"type":"sell"},
-                  {"date":1378035025,"price":810,"amount":0.56,"tid":2,"type":"buy"},
-                  {"date":1378035025,"price":806.37,"amount":4.44,"tid":3,"type":"sell"},
-                  {"date":1378035025,"price":803.2,"amount":0.8,"tid":4,"type":"buy"},
-                  {"date":1378035045,"price":804.6,"amount":1.328,"tid":5,"type":"buy"}]
-        self.tick.mput('SH01', trades)
-        iter = self.tick.query_values("SH01", 1378035025)
-        results = [json.loads(row) for row in list(iter)]
-        self.assertEqual(len(trades), len(results))
-        self.assertTrue(trades[0] in results)
-        self.assertTrue(trades[-1] in results)
-
-    def test_range_query(self):
-        db = datastore.TradeHistory(self.store, self.meta)
-        trades = [{"date":1369275153,"price":810,"amount":0.56,"tid":2,"type":"buy"},
-                  {"date":1378035025,"price":806.37,"amount":0.46,"tid":1,"type":"sell"},
-                  {"date":1381192637,"price":806.37,"amount":4.44,"tid":3,"type":"sell"},
-                  {"date":1382604356,"price":803.2,"amount":0.8,"tid":4,"type":"buy"},
-                  {"date":1384191413,"price":804.6,"amount":1.328,"tid":5,"type":"buy"}]
-        db.mput('SH01', trades)
-        iter = db.range_query("SH01", 1369275153, 1384191413)
-        results = [json.loads(value) for key, value in iter]
-        self.assertEqual(len(trades), len(results))
-        self.assertTrue(trades[0] in results)
-        self.assertTrue(trades[-1] in results)
-
-
 class MetaTest(unittest.TestCase, TestHelper):
 
     def setUp(self):
@@ -438,6 +410,49 @@ class MetaTest(unittest.TestCase, TestHelper):
         actual = self.meta.prefix_symbol("Huobi:BTCCNY")
         expect = transform.int2bytes(2, 2)
         self.assertEqual(expect, actual)
+
+
+class TradeHistoryTest(unittest.TestCase, TestHelper):
+
+    def setUp(self):
+        self._setup()
+
+        plain = datastore.PlainTableRockStore.open(
+            os.path.join(self.datadir, 'plain'))
+        self.meta = datastore.Meta(plain, SH())
+        self.store = datastore.RockStore.open(self.datadir)
+        self.trade = datastore.TradeHistory(self.store, self.meta)
+
+    def tearDown(self):
+        self._clean()
+
+    def test_batch_write(self):
+        trades = [{"date":1378035025,"price":806.37,"amount":0.46,"tid":1,"type":"sell"},
+                  {"date":1378035025,"price":810,"amount":0.56,"tid":2,"type":"buy"},
+                  {"date":1378035025,"price":806.37,"amount":4.44,"tid":3,"type":"sell"},
+                  {"date":1378035025,"price":803.2,"amount":0.8,"tid":4,"type":"buy"},
+                  {"date":1378035045,"price":804.6,"amount":1.328,"tid":5,"type":"buy"}]
+        self.trade.mput('SH01', trades)
+        iter = self.trade.query_values("SH01", 1378035025)
+        results = [json.loads(row) for row in list(iter)]
+        self.assertEqual(len(trades), len(results))
+        self.assertTrue(trades[0] in results)
+        self.assertTrue(trades[-1] in results)
+
+
+    def test_range_query(self):
+        trades = [{"date":1369275153,"price":810,"amount":0.56,"tid":2,"type":"buy"},
+                  {"date":1378035025,"price":806.37,"amount":0.46,"tid":1,"type":"sell"},
+                  {"date":1381192637,"price":806.37,"amount":4.44,"tid":3,"type":"sell"},
+                  {"date":1382604356,"price":803.2,"amount":0.8,"tid":4,"type":"buy"},
+                  {"date":1384191413,"price":804.6,"amount":1.328,"tid":5,"type":"buy"}]
+        self.trade.mput('SH01', trades)
+        iter = self.trade.range_query("SH01", 1369275153, 1384191413)
+        results = [json.loads(value) for key, value in iter]
+        self.assertEqual(len(trades), len(results))
+        self.assertTrue(trades[0] in results)
+        self.assertTrue(trades[-1] in results)
+
 
 class DayTest(unittest.TestCase):
 
