@@ -4,6 +4,7 @@
 # Copyright 2010 yinhm
 
 import datetime
+import functools
 import json
 
 import numpy as np
@@ -12,7 +13,7 @@ from json import encoder
 encoder.FLOAT_REPR = lambda f: format(f, '.2f')
 
 
-__all__ = ['print2f', 'json_encode', 'json_decode']
+__all__ = ['print2f', 'json_encode', 'json_decode', 'timeit']
 
 
 class print2f(float):
@@ -34,3 +35,18 @@ def json_encode(value):
 def json_decode(value):
     """Returns Python objects for the given JSON string."""
     return json.loads(value)
+
+
+def timeit(method):
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwds):
+        import time
+        import logging
+        start_time = time.time()
+        ret = method(self, *args, **kwds)
+        end_time = time.time()
+        parse_time = 1000.0 * (end_time - start_time)
+        logging.debug("time for %s: %.2fms", method.__name__, parse_time)
+        return ret
+    return wrapper
+
