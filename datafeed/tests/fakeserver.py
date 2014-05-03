@@ -8,9 +8,16 @@ import tornado
 import os
 import signal
 import shutil
+import sys
 
 from tornado import ioloop
 from tornado.options import define, options
+
+
+root_dir = os.path.realpath(os.path.join(
+    os.path.dirname(__file__), '../', '../'))
+sys.path.insert(1, root_dir)
+
 
 from datafeed.exchange import SH
 from datafeed.imiguserver import ImiguApplication
