@@ -47,6 +47,7 @@ import UserDict
 import cPickle as pickle
 import numpy as np
 
+from collections import OrderedDict
 from datafeed import transform
 from datafeed.bidict import Bidict
 from datafeed.exchange import StockExchange
@@ -499,12 +500,16 @@ class RockStore(object):
 
     def range_query(self, symbol, start_time, stop_time):
         """Range query rocksdb store in a time window."""
-        prefixes = set()
+        prefixes = OrderedDict()
         for i in xrange(start_time, stop_time, 86400):
-            prefixes.add(self.prefix(symbol, i))
-        prefixes.add(self.prefix(symbol, stop_time))
+            key = self.prefix(symbol, i)
+            if key not in prefixes:
+                prefixes[key] = i
+        stop_key = self.prefix(symbol, stop_time)
+        if stop_key not in prefixes:
+            prefixes[stop_key] = stop_time
 
-        for prefix in prefixes:
+        for prefix in prefixes.keys():
             iteration = self._rdb.iteritems(prefix=prefix)
             iteration.seek(prefix)
             for key, value in iteration:
