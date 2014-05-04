@@ -143,6 +143,12 @@ class ClientTest(unittest.TestCase):
         ret = self.client.get_meta(key)
         self.assertEqual('xx', ret)
 
+    def test_mput_trade(self):
+        symbol = "SH000001"
+        trades ="""[{"date":1378035025,"price":806.37,"amount":0.46,"tid":1,"type":"sell"},{"date":1378035025,"price":810,"amount":0.56,"tid":2,"type":"buy"},{"date":1378035025,"price":806.37,"amount":4.44,"tid":3,"type":"sell"},{"date":1378035025,"price":803.2,"amount":0.8,"tid":4,"type":"buy"},{"date":1378035045,"price":804.6,"amount":1.328,"tid":5,"type":"buy"}]"""
+        ret = self.client.mput_trade(symbol, trades, jsondata=True)
+        self.assertEqual(ret, 'OK')
+
 
 if __name__ == '__main__':
     unittest.main()

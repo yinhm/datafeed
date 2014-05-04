@@ -45,6 +45,26 @@ def put_zipped(method):
     return wrapper
 
 
+def mput_zipped(method):
+    @functools.wraps(method)
+    def wrapper(self, *args, **kwds):
+        assert len(args) == 2
+
+        args = list(args)
+        # rawdata
+        rawdata = args[-1]
+        if ('jsondata' not in kwds) or \
+           kwds['jsondata'] != True:
+            rawdata = json.dumps(rawdata)
+        args[-1] = zlib.compress(rawdata)
+        args.append('zip')
+        apiname = method.__name__.upper()
+
+        # args should be [symbol, timestamp, rawdata, zip]
+        return self.execute_command(apiname, *args)
+    return wrapper
+
+
 class Client(object):
     """Manages Tcp communication to and from a datafeed server.
     """
@@ -289,7 +309,7 @@ class Client(object):
     def put_trade(self, symbol, timestamp, rawdata):
         pass
 
-    @put_zipped
+    @mput_zipped
     def mput_trade(self, symbol, rawdata):
         pass
 
