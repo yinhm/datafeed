@@ -597,7 +597,7 @@ class Handler(object):
                 self.finish()
 
         if self.request.method not in self.SUPPORTED_METHODS:
-            logging.error("Unknown command.\r\n")
+            logging.error("Unknown command %s" % self.request.method)
             self.request.write("-ERR UNKNOWN COMMAND\r\n")
             if not self._finished:
                 self.finish()
