@@ -392,6 +392,8 @@ class OHLC(object):
         self.store = store
 
         self.shape_x = None
+        self.market_minutes = market_minutes
+
         if market_minutes:
             self.shape_x = market_minutes / (self.time_interval / 60)
 
@@ -423,7 +425,9 @@ class OHLC(object):
         assert quotes['time'][0] < quotes['time'][1], \
             'Data are not chronological ordered.'
 
-        if self.shape_x:
+        # FIXME: disable update_multi for markets like SH
+        # need to fix timestamp_to_index first
+        if self.market_minutes == 1440: # full day
             self._update_multi(symbol, quotes)
         else:
             self._update(symbol, quotes)
